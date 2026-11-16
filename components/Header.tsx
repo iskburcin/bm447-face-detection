@@ -3,18 +3,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Icon from "./Icon";
+import { LangSwitch, useT } from "./I18n";
 
 const LINKS = [
-  { href: "/", label: "Ana Sayfa" },
-  { href: "/tespit", label: "Canlı Tespit" },
-  { href: "/laboratuvar", label: "Ders Laboratuvarı" },
-  { href: "/deneyler", label: "Deneyler" },
-  { href: "/etiketleme", label: "Etiketleme" },
-  { href: "/yontem", label: "Yöntem" },
+  { href: "/", tr: "Ana Sayfa", en: "Home" },
+  { href: "/tespit", tr: "Canlı Tespit", en: "Live Detection" },
+  { href: "/laboratuvar", tr: "Ders Laboratuvarı", en: "Lecture Lab" },
+  { href: "/deneyler", tr: "Deneyler", en: "Experiments" },
+  { href: "/etiketleme", tr: "Etiketleme", en: "Annotation" },
+  { href: "/yontem", tr: "Yöntem", en: "Method" },
 ];
 
 export default function Header() {
   const path = usePathname();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
@@ -38,17 +40,18 @@ export default function Header() {
           <span className="brand-mark"><Icon name="face" size={20} /></span>
           <span>YüzLab<span className="muted" style={{ fontWeight: 500 }}> · BM447</span></span>
         </Link>
-        <button className="icon-btn menu-btn" aria-label="Menü" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <button className="icon-btn menu-btn" aria-label={t("Menü", "Menu")} aria-expanded={open} onClick={() => setOpen(!open)}>
           <Icon name="menu" />
         </button>
-        <nav className={`nav${open ? " open" : ""}`} aria-label="Ana menü">
+        <nav className={`nav${open ? " open" : ""}`} aria-label={t("Ana menü", "Main menu")}>
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} aria-current={(l.href === "/" ? path === "/" : path.startsWith(l.href)) ? "page" : undefined}>
-              {l.label}
+              {t(l.tr, l.en)}
             </Link>
           ))}
         </nav>
-        <button className="icon-btn" onClick={toggle} aria-label="Temayı değiştir" title="Açık / koyu tema">
+        <LangSwitch />
+        <button className="icon-btn" onClick={toggle} aria-label={t("Temayı değiştir", "Toggle theme")} title={t("Açık / koyu tema", "Light / dark theme")}>
           <Icon name={theme === "dark" ? "sun" : "moon"} />
         </button>
       </div>

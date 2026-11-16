@@ -3,6 +3,30 @@
 **BM447 Sayısal Görüntü İşleme · Düzce Üniversitesi · Prof. Dr. Pakize Erdoğmuş**
 Klasik yöntem (Viola-Jones / Haar Cascade) ile önceden eğitilmiş YOLO yüz modeli (YOLOv8n-face) karşılaştırması.
 
+**Live demo:** <https://iskburcin.github.io/bm447-face-detection/> · the site has a **TR / EN** language switch in the header.
+
+<details>
+<summary><b>English summary</b></summary>
+
+**YüzLab** studies how lighting and image enhancement affect face detection. It compares the classical
+**Viola-Jones (Haar cascade)** detector with a pretrained **YOLOv8n-face** model (WIDER FACE) on normal, low-light
+and backlit images, each processed four ways: raw, brightness/contrast, **hand-written histogram equalization** and
+CLAHE. Detections are matched to ground truth one-to-one at IoU ≥ 0.5 and reported as TP/FP/FN, precision, recall,
+F1, per-image count error, MAE and timing.
+
+* **Web app** (Next.js 16, TypeScript): everything runs **in the browser** via WebAssembly — OpenCV.js for Haar,
+  ONNX Runtime Web for YOLO — so images never leave the device. Pages: Live Detection (file/camera, step-by-step
+  preprocessing with histograms, both models compared), Lecture Lab (11 interactive lessons from pixel matrices to
+  NMS and IoU), Experiments (all tables and figures, plus a full in-browser rerun that reproduces the Python F1
+  values exactly), Annotation tool and Method.
+* **Python pipeline** (`python/`): dataset generation, experiments, figures and the Word report.
+* **Deploy:** Vercel, Docker (`docker compose up --build`) or GitHub Pages (`npm run build:pages`).
+* **Key finding:** an image that *looks* better does not always detect better — HE/CLAHE rescue Viola-Jones in the
+  dark but add false positives in good light, while YOLO is almost unaffected by preprocessing.
+* Presentation guide in English: [`docs/Defense_Guide_EN.md`](docs/Defense_Guide_EN.md).
+
+</details>
+
 > Teslim notu: Ana klasör adı grup üyelerinin numaralarını içermelidir, örn. `Proje1_N1_N2_N3`.
 > Bu klasörü (`face-detection-project`) teslimden önce bu biçimde yeniden adlandırın ve zip'leyin (bkz. [Teslim kontrol listesi](#teslim-kontrol-listesi)).
 

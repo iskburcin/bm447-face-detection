@@ -20,3 +20,12 @@ export async function fetchDataset(): Promise<Dataset> {
   if (!r.ok) throw new Error("dataset/annotations.json bulunamadı");
   return r.json();
 }
+
+/* İngilizce etiketler (dil seçici için) */
+export const ENH_EN: Record<EnhKey, string> = {
+  original: "Raw (original)",
+  brightness_contrast: "Brightness/Contrast",
+  hist_eq: "Histogram Equalization",
+  clahe: "CLAHE",
+};
+export const COND_EN: Record<string, string> = { normal: "Normal light", low_light: "Low light", backlight: "Backlight" };

@@ -2,13 +2,15 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Box } from "@/lib/metrics";
-import { COND_LABELS } from "@/lib/data";
+import { COND_LABELS, COND_EN } from "@/lib/data";
+import { useT } from "@/components/I18n";
 import { detectYolo } from "@/lib/detectors";
 import { fromImageElement } from "@/lib/imgproc";
 
 type Entry = { name: string; url: string; w: number; h: number; condition: string; faces: Box[] };
 
 export default function Annotator() {
+  const t = useT();
   const [items, setItems] = useState<Entry[]>([]);
   const [cur, setCur] = useState(0);
   const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
@@ -118,13 +120,13 @@ export default function Annotator() {
     <div className="grid-2" style={{ gridTemplateColumns: "300px minmax(0,1fr)", alignItems: "start" }}>
       <aside className="card stack">
         <label className="dropzone">
-          <Icon name="upload" /><div className="small">Görüntüleri (ve varsa önceki annotations.json'ı) seç</div>
+          <Icon name="upload" /><div className="small">{t("Görüntüleri (ve varsa önceki annotations.json'ı) seç", "Select images (and a previous annotations.json, if any)")}</div>
           <input type="file" multiple accept="image/*,.json" hidden onChange={(e) => addFiles(e.target.files)} />
         </label>
         <div className="small">
-          {counts.map(([c, n]) => <div key={c} className="row" style={{ justifyContent: "space-between" }}><span>{COND_LABELS[c]}</span><span className={`chip ${n >= 5 ? "chip--ok" : "chip--err"}`}>{n} / 5+</span></div>)}
-          <div className="row" style={{ justifyContent: "space-between", marginTop: 4 }}><b>Toplam</b><span className={`chip ${items.length >= 15 ? "chip--ok" : "chip--err"}`}>{items.length} / 15+</span></div>
-          <div className="muted" style={{ marginTop: 4 }}>Toplam yüz: {items.reduce((s, x) => s + x.faces.length, 0)}</div>
+          {counts.map(([c, n]) => <div key={c} className="row" style={{ justifyContent: "space-between" }}><span>{t(COND_LABELS[c], COND_EN[c])}</span><span className={`chip ${n >= 5 ? "chip--ok" : "chip--err"}`}>{n} / 5+</span></div>)}
+          <div className="row" style={{ justifyContent: "space-between", marginTop: 4 }}><b>{t("Toplam", "Total")}</b><span className={`chip ${items.length >= 15 ? "chip--ok" : "chip--err"}`}>{items.length} / 15+</span></div>
+          <div className="muted" style={{ marginTop: 4 }}>{t("Toplam yüz", "Total faces")}: {items.reduce((s, x) => s + x.faces.length, 0)}</div>
         </div>
         <div className="stack" style={{ gap: 4, maxHeight: 360, overflow: "auto" }}>
           {items.map((x, i) => (
@@ -134,32 +136,31 @@ export default function Annotator() {
             </button>
           ))}
         </div>
-        <button className="btn btn--primary" disabled={!items.length} onClick={exportJson}><Icon name="download" size={15} /> annotations.json indir</button>
+        <button className="btn btn--primary" disabled={!items.length} onClick={exportJson}><Icon name="download" size={15} /> {t("annotations.json indir", "Download annotations.json")}</button>
       </aside>
 
       <section className="card stack">
-        {!it ? <p>Başlamak için soldan görüntü seç.</p> : (
+        {!it ? <p>{t("Başlamak için soldan görüntü seç.", "Select images on the left to start.")}</p> : (
           <>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <b>{it.name}</b>
               <div className="seg">{Object.entries(COND_LABELS).map(([k, l]) => (
-                <button key={k} aria-pressed={it.condition === k} onClick={() => setItems((xs) => xs.map((x, i) => (i === cur ? { ...x, condition: k } : x)))}>{l}</button>
+                <button key={k} aria-pressed={it.condition === k} onClick={() => setItems((xs) => xs.map((x, i) => (i === cur ? { ...x, condition: k } : x)))}>{t(l, COND_EN[k])}</button>
               ))}</div>
             </div>
             <div className="annot-stage">
               <canvas ref={cRef} style={{ maxWidth: "100%", maxHeight: "70vh", width: "auto" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />
             </div>
             <div className="row">
-              <button className="btn btn--sm" onClick={() => setCur(Math.max(0, cur - 1))}>← Önceki</button>
-              <button className="btn btn--sm" onClick={() => setCur(Math.min(items.length - 1, cur + 1))}>Sonraki →</button>
-              <button className="btn btn--sm" disabled={sel === null} onClick={() => { update(it.faces.filter((_, i) => i !== sel)); setSel(null); }}><Icon name="trash" size={14} /> Seçili kutuyu sil</button>
-              <button className="btn btn--sm" onClick={() => update([])}>Tümünü temizle</button>
-              <button className="btn btn--sm" disabled={busy} onClick={suggest}>{busy ? <span className="spin" /> : <Icon name="cpu" size={14} />} YOLO ile öner</button>
+              <button className="btn btn--sm" onClick={() => setCur(Math.max(0, cur - 1))}>{t("← Önceki", "← Previous")}</button>
+              <button className="btn btn--sm" onClick={() => setCur(Math.min(items.length - 1, cur + 1))}>{t("Sonraki →", "Next →")}</button>
+              <button className="btn btn--sm" disabled={sel === null} onClick={() => { update(it.faces.filter((_, i) => i !== sel)); setSel(null); }}><Icon name="trash" size={14} /> {t("Seçili kutuyu sil", "Delete selected box")}</button>
+              <button className="btn btn--sm" onClick={() => update([])}>{t("Tümünü temizle", "Clear all")}</button>
+              <button className="btn btn--sm" disabled={busy} onClick={suggest}>{busy ? <span className="spin" /> : <Icon name="cpu" size={14} />} {t("YOLO ile öner", "Suggest with YOLO")}</button>
             </div>
             <p className="small muted">
-              Sürükle: yeni kutu · Tıkla: seç · Delete: sil · ←/→: görüntü değiştir · Shift+sürükle: bir kutunun içinden yeni kutu.
-              Kural: görünen her yüz (kısmen örtülü olsa da) alından çeneye, kulaktan kulağa kadar işaretlenir. “YOLO ile öner” yalnızca hız içindir;
-              öneriler mutlaka elle kontrol edilmelidir — aksi hâlde referans YOLO'ya yanlı olur.
+              {t("Sürükle: yeni kutu · Tıkla: seç · Delete: sil · ←/→: görüntü değiştir · Shift+sürükle: bir kutunun içinden yeni kutu. Kural: görünen her yüz (kısmen örtülü olsa da) alından çeneye, kulaktan kulağa kadar işaretlenir. “YOLO ile öner” yalnızca hız içindir; öneriler mutlaka elle kontrol edilmelidir — aksi hâlde referans YOLO'ya yanlı olur.",
+                "Drag: new box · Click: select · Delete: remove · ←/→: switch image · Shift+drag: new box inside a box. Rule: every visible face (even partly occluded) is boxed from forehead to chin, ear to ear. “Suggest with YOLO” is only a speed-up; suggestions must be checked by hand — otherwise the ground truth becomes biased towards YOLO.")}
             </p>
           </>
         )}
