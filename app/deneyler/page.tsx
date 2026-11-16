@@ -1,3 +1,4 @@
+import { BASE } from "@/lib/base";
 import type { Metadata } from "next";
 import { readResults, SummaryRow } from "@/lib/results";
 import { ENH_KEYS, ENH_LABELS, DET_LABELS, COND_LABELS } from "@/lib/data";
@@ -68,14 +69,14 @@ export default function Page() {
       <p className="small muted" style={{ marginTop: 8 }}>{res.timing_note} Makine: {res.machine}. Üretim: {res.generated}.</p>
 
       <div className="grid-2" style={{ marginTop: 16 }}>
-        <div className="card"><img src="/results/figures/bar_f1.png" alt="F1 çubuk grafiği" /></div>
-        <div className="card"><img src="/results/figures/bar_mae.png" alt="MAE çubuk grafiği" /></div>
-        <div className="card"><img src="/results/figures/bar_recall.png" alt="Recall çubuk grafiği" /></div>
-        <div className="card"><img src="/results/figures/bar_precision.png" alt="Precision çubuk grafiği" /></div>
+        <div className="card"><img src={BASE + "/results/figures/bar_f1.png"} alt="F1 çubuk grafiği" /></div>
+        <div className="card"><img src={BASE + "/results/figures/bar_mae.png"} alt="MAE çubuk grafiği" /></div>
+        <div className="card"><img src={BASE + "/results/figures/bar_recall.png"} alt="Recall çubuk grafiği" /></div>
+        <div className="card"><img src={BASE + "/results/figures/bar_precision.png"} alt="Precision çubuk grafiği" /></div>
       </div>
 
       <div className="section-title"><span className="num">2</span><h2>Koşul × ön işleme</h2></div>
-      <div className="card" style={{ marginBottom: 16 }}><img src="/results/figures/heatmap_f1.png" alt="F1 ısı haritası" /></div>
+      <div className="card" style={{ marginBottom: 16 }}><img src={BASE + "/results/figures/heatmap_f1.png"} alt="F1 ısı haritası" /></div>
       <SummaryTable rows={byCond} showCond />
 
       <div className="section-title"><span className="num">3</span><h2>Görsel olarak daha iyi = daha iyi tespit mi?</h2></div>
@@ -96,15 +97,15 @@ export default function Page() {
           </table></div>
         </div>
         <div className="card stack">
-          <img src="/results/figures/entropy_vs_f1.png" alt="Entropi ve F1 ilişkisi" />
-          <img src="/results/figures/histograms_lowlight.png" alt="Düşük ışık histogramları" />
+          <img src={BASE + "/results/figures/entropy_vs_f1.png"} alt="Entropi ve F1 ilişkisi" />
+          <img src={BASE + "/results/figures/histograms_lowlight.png"} alt="Düşük ışık histogramları" />
         </div>
       </div>
 
       <div className="section-title"><span className="num">4</span><h2>Örnek çıktılar</h2></div>
       <div className="stack">
         {["examples_normal_03.png", "examples_lowlight_05.png", "examples_backlight_05.png"].map((f) => (
-          <div key={f} className="card"><img src={`/results/figures/${f}`} alt={f} /></div>
+          <div key={f} className="card"><img src={`${BASE}/results/figures/${f}`} alt={f} /></div>
         ))}
       </div>
 

@@ -1,4 +1,5 @@
 "use client";
+import { BASE } from "@/lib/base";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Histogram, ImageView } from "@/components/Viz";
@@ -57,7 +58,7 @@ export default function Lab() {
 
   useEffect(() => { fetchDataset().then(setDs).catch(() => {}); }, []);
   const pick = async (it: DatasetItem) => {
-    const img = await P.loadImage("/dataset/" + it.file);
+    const img = await P.loadImage(BASE + "/dataset/" + it.file);
     setItem(it); setSrc(P.fromImageElement(img, 4096));
   };
   useEffect(() => { if (ds && !src) pick(ds.images[0]); }, [ds, src]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -88,7 +89,7 @@ export default function Lab() {
           <div className="thumbs" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
             {ds?.images.map((i) => (
               <button key={i.file} aria-pressed={item?.file === i.file} onClick={() => pick(i)} title={`${COND_LABELS[i.condition]} · ${i.note ?? ""}`}>
-                <img src={"/dataset/" + i.file} alt="" loading="lazy" />
+                <img src={BASE + "/dataset/" + i.file} alt="" loading="lazy" />
               </button>
             ))}
           </div>

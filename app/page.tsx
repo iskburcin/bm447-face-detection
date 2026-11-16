@@ -1,3 +1,4 @@
+import { BASE } from "@/lib/base";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import { readResults } from "@/lib/results";
@@ -32,7 +33,7 @@ export default function Home() {
         </div>
 
         <Link href="/deneyler" className="tile tile--img tile--w">
-          <img src="/results/figures/examples_lowlight_05.png" alt="Düşük ışık örneğinde iki dedektörün dört ön işlemdeki sonuçları" />
+          <img src={BASE + "/results/figures/examples_lowlight_05.png"} alt="Düşük ışık örneğinde iki dedektörün dört ön işlemdeki sonuçları" />
           <span className="caption">Düşük ışık: ön işleme Viola-Jones'u kurtarıyor</span>
         </Link>
 

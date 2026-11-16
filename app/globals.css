@@ -258,3 +258,9 @@ td.best { font-weight: 700; color: var(--ok); }
 .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .flow .step { padding: 8px 14px; border-radius: 12px; background: var(--surface-2); font-size: 0.85rem; font-weight: 600; }
 .flow .arr { color: var(--muted); }
+
+/* ---------- Canlı Tespit: alt alta aşamalar ---------- */
+.stage { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 24px; align-items: start; scroll-margin-top: 80px; }
+.stage-side { position: sticky; top: 84px; }
+.result-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); }
+@media (max-width: 1000px) { .stage, .result-row { grid-template-columns: 1fr; } .stage-side { position: static; } }

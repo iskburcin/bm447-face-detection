@@ -1,3 +1,4 @@
+import { BASE } from "@/lib/base";
 /**
  * Tarayıcı içinde çalışan iki dedektör:
  *  - Viola-Jones / Haar Cascade : OpenCV.js (WASM) + haarcascade_frontalface_default.xml
@@ -36,7 +37,7 @@ let cvPromise: Promise<any> | null = null;
 export function loadOpenCV(): Promise<any> {
   if (!cvPromise) {
     cvPromise = (async () => {
-      await loadScript("/vendor/opencv.js");
+      await loadScript(BASE + "/vendor/opencv.js");
       let cv = window.cv;
       if (cv instanceof Promise) cv = await cv;
       if (!cv.Mat) {
@@ -58,7 +59,7 @@ export function loadHaar(): Promise<any> {
   if (!haarPromise) {
     haarPromise = (async () => {
       const cv = await loadOpenCV();
-      const buf = new Uint8Array(await (await fetch("/models/haarcascade_frontalface_default.xml")).arrayBuffer());
+      const buf = new Uint8Array(await (await fetch(BASE + "/models/haarcascade_frontalface_default.xml")).arrayBuffer());
       try { cv.FS_unlink("/haar.xml"); } catch { /* ilk yükleme */ }
       cv.FS_createDataFile("/", "haar.xml", buf, true, false, false);
       const clf = new cv.CascadeClassifier();
@@ -107,11 +108,11 @@ let ortSession: Promise<any> | null = null;
 export function loadYolo(): Promise<any> {
   if (!ortSession) {
     ortSession = (async () => {
-      await loadScript("/vendor/ort/ort.wasm.min.js");
+      await loadScript(BASE + "/vendor/ort/ort.wasm.min.js");
       const ort = window.ort;
-      ort.env.wasm.wasmPaths = "/vendor/ort/";
+      ort.env.wasm.wasmPaths = BASE + "/vendor/ort/";
       ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1;
-      return ort.InferenceSession.create("/models/yolov8n-face-lindevs.onnx", { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+      return ort.InferenceSession.create(BASE + "/models/yolov8n-face-lindevs.onnx", { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
     })();
     ortSession.catch(() => { ortSession = null; });
   }

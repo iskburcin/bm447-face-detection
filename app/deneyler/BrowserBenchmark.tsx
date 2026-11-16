@@ -1,4 +1,5 @@
 "use client";
+import { BASE } from "@/lib/base";
 import { useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { RGBA, fromImageElement, loadImage } from "@/lib/imgproc";
@@ -45,7 +46,7 @@ export default function BrowserBenchmark({ python }: { python: SummaryRow[] }) {
           const f = custom.files.get(it.file.split("/").pop()!);
           if (!f) { setMsg(`Eksik dosya: ${it.file}`); continue; }
           const u = URL.createObjectURL(f); img = await loadImage(u); URL.revokeObjectURL(u);
-        } else img = await loadImage("/dataset/" + it.file);
+        } else img = await loadImage(BASE + "/dataset/" + it.file);
         const src: RGBA = fromImageElement(img, 8192);
         for (const e of ENH_KEYS) {
           for (const d of ["viola_jones", "yolo"]) {

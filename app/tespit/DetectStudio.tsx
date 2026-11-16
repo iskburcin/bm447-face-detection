@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { BASE } from "@/lib/base";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Histogram, ImageView } from "@/components/Viz";
 import { RGBA, fromImageElement, loadImage, lumaHistogram, meanStd, toGray, entropy } from "@/lib/imgproc";
@@ -28,10 +29,12 @@ export default function DetectStudio() {
   const [cam, setCam] = useState(false);
   const [live, setLive] = useState(false);
   const [drag, setDrag] = useState(false);
+  const [auto, setAuto] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const liveRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const scrollNext = useRef(false); // ilk otomatik seçimde kaydırma yapma
 
   // veri kümesi + modelleri arka planda yükle
   useEffect(() => {
@@ -41,8 +44,10 @@ export default function DetectStudio() {
   }, []);
 
   const pickSample = useCallback(async (it: DatasetItem) => {
-    const img = await loadImage("/dataset/" + it.file);
+    const img = await loadImage(BASE + "/dataset/" + it.file);
     setItem(it); setSrc(fromImageElement(img, 4096)); setSrcName(it.file); setYolo(null); setHaar(null);
+    if (scrollNext.current) document.getElementById("asama-2")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollNext.current = true;
   }, []);
   useEffect(() => { if (ds && !src) pickSample(ds.images.find((i) => i.condition === "low_light") ?? ds.images[0]); }, [ds, src, pickSample]);
 
@@ -52,6 +57,7 @@ export default function DetectStudio() {
     try {
       const img = await loadImage(url);
       setItem(null); setSrc(fromImageElement(img, 1280)); setSrcName(f.name); setYolo(null); setHaar(null);
+      document.getElementById("asama-2")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } finally { URL.revokeObjectURL(url); }
   };
 
@@ -73,6 +79,13 @@ export default function DetectStudio() {
     } catch (e) { setErr(String(e)); }
     setBusy(null);
   }, [processed, which, yoloP, haarP]);
+
+  // otomatik tespit: işlenmiş görüntü veya ayarlar değişince (canlı mod kendi döngüsünü kullanır)
+  useEffect(() => {
+    if (!auto || live || !processed || (!models.yolo && !models.haar)) return;
+    const t = setTimeout(() => detect(processed), 150);
+    return () => clearTimeout(t);
+  }, [auto, live, processed, models.yolo, models.haar, detect]);
 
   // ---- kamera ----
   const startCam = async () => {
@@ -118,13 +131,44 @@ export default function DetectStudio() {
     const a = document.createElement("a"); a.href = c.toDataURL("image/png"); a.download = "tespit_sonucu.png"; a.click();
   };
 
+  const s1 = stages[0], sN = stages[stages.length - 1];
+  const hSrc = useMemo(() => (src ? lumaHistogram(src) : null), [src]);
+  const hProc = useMemo(() => (processed ? lumaHistogram(processed) : null), [processed]);
+  const statOf = (im: RGBA | null, h: Uint32Array | null) => {
+    if (!im || !h) return "";
+    const m = meanStd(toGray(im));
+    return `μ=${m.mean.toFixed(1)} · σ=${m.std.toFixed(1)} · H=${entropy(h).toFixed(2)} bit`;
+  };
+  const models3 = [
+    { key: "yolo", title: "YOLOv8n-face", icon: "cpu", color: "#7c6fd0", chip: "chip--yolo", d: yolo, e: ey, labels: yolo?.scores.map((s) => `face ${s.toFixed(2)}`), timeLabel: "session.run" },
+    { key: "haar", title: "Viola-Jones (Haar)", icon: "grid", color: "#e0795b", chip: "chip--haar", d: haar, e: eh, labels: haar?.boxes.map(() => "yüz"), timeLabel: "detectMultiScale" },
+  ];
+  type M = (typeof models3)[number];
+  const cmpRows: [string, (m: M) => number | null, "max" | "min", (v: number) => string][] = [
+    ["Tespit edilen yüz", (m) => m.d?.boxes.length ?? null, "max", (v) => String(v)],
+    ["TP (IoU ≥ 0.5)", (m) => m.e?.tp ?? null, "max", (v) => String(v)],
+    ["FP", (m) => m.e?.fp ?? null, "min", (v) => String(v)],
+    ["FN", (m) => m.e?.fn ?? null, "min", (v) => String(v)],
+    ["Precision", (m) => m.e?.precision ?? null, "max", (v) => v.toFixed(2)],
+    ["Recall", (m) => m.e?.recall ?? null, "max", (v) => v.toFixed(2)],
+    ["F1", (m) => m.e?.f1 ?? null, "max", (v) => v.toFixed(2)],
+    ["Sayma hatası |tahmin − gerçek|", (m) => (m.d && gt ? Math.abs(m.d.boxes.length - gt.length) : null), "min", (v) => String(v)],
+    ["Çıkarım süresi (ms)", (m) => m.d?.inferenceMs ?? null, "min", (v) => v.toFixed(0)],
+    ["Uçtan uca süre (ms)", (m) => m.d?.totalMs ?? null, "min", (v) => v.toFixed(0)],
+  ];
+  const slider = (label: string, v: number, set: (n: number) => void, min: number, max: number, step: number) => (
+    <div className="field"><label>{label}</label>
+      <div className="slider-row"><input type="range" min={min} max={max} step={step} value={v} onChange={(e) => set(+e.target.value)} />
+        <input type="number" step={step} value={v} onChange={(e) => set(+e.target.value)} /></div></div>
+  );
+
   return (
     <div className="stack" style={{ gap: 20 }}>
       {err && <div className="note note--warn">{err}</div>}
 
-      {/* 1-2-3: kaynak, ön işleme, dedektör */}
-      <div className="grid-3" style={{ alignItems: "start" }}>
-        <section className="card stack">
+      {/* ============ AŞAMA 1: KAYNAK ============ */}
+      <section className="card stage">
+        <div className="stage-side stack">
           <div className="row"><span className="num">1</span><h3>Görüntü kaynağı</h3></div>
           <div className={`dropzone${drag ? " drag" : ""}`} onClick={() => fileRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
@@ -141,22 +185,31 @@ export default function DetectStudio() {
               </>}
           </div>
           {cam && <video ref={videoRef} muted playsInline className="cv" />}
-          <div className="label">Veri kümesinden örnekler</div>
+          <div className="chips">
+            <span className={`chip ${models.yolo ? "chip--ok" : ""}`}>{models.yolo ? "✓" : <span className="spin" />} YOLOv8n-face</span>
+            <span className={`chip ${models.haar ? "chip--ok" : ""}`}>{models.haar ? "✓" : <span className="spin" />} OpenCV Haar</span>
+          </div>
+        </div>
+        <div className="stack">
+          <div className="label">Veri kümesinden örnekler {item && <span className="muted">· seçili: {item.file.replace("images/", "")} ({COND_LABELS[item.condition]}, {item.count} yüz)</span>}</div>
           {ds && Object.keys(ds.conditions).map((c) => (
             <div key={c} className="stack" style={{ gap: 4 }}>
               <span className="small muted">{COND_LABELS[c] ?? c}</span>
-              <div className="thumbs">
+              <div className="thumbs" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))" }}>
                 {ds.images.filter((i) => i.condition === c).map((i) => (
                   <button key={i.file} aria-pressed={item?.file === i.file} onClick={() => pickSample(i)} title={i.note}>
-                    <img src={"/dataset/" + i.file} alt={i.file} loading="lazy" />
+                    <img src={BASE + "/dataset/" + i.file} alt={i.file} loading="lazy" />
                   </button>
                 ))}
               </div>
             </div>
           ))}
-        </section>
+        </div>
+      </section>
 
-        <section className="card stack">
+      {/* ============ AŞAMA 2: ÖN İŞLEME ============ */}
+      <section className="card stage" id="asama-2">
+        <div className="stage-side stack">
           <div className="row"><span className="num">2</span><h3>Ön işleme zinciri</h3></div>
           <div className="small muted">Deney koşulu ön ayarları (tek işlem, sabit parametre):</div>
           <div className="seg">
@@ -168,12 +221,8 @@ export default function DetectStudio() {
           </label>
           {pipe.bc.on && (
             <div className="controls">
-              <div className="field"><label>Kontrast α</label>
-                <div className="slider-row"><input type="range" min={0.3} max={3} step={0.05} value={pipe.bc.alpha} onChange={(e) => setPipe({ ...pipe, bc: { ...pipe.bc, alpha: +e.target.value } })} />
-                  <input type="number" step={0.05} value={pipe.bc.alpha} onChange={(e) => setPipe({ ...pipe, bc: { ...pipe.bc, alpha: +e.target.value } })} /></div></div>
-              <div className="field"><label>Parlaklık β</label>
-                <div className="slider-row"><input type="range" min={-100} max={100} step={1} value={pipe.bc.beta} onChange={(e) => setPipe({ ...pipe, bc: { ...pipe.bc, beta: +e.target.value } })} />
-                  <input type="number" value={pipe.bc.beta} onChange={(e) => setPipe({ ...pipe, bc: { ...pipe.bc, beta: +e.target.value } })} /></div></div>
+              {slider("Kontrast α", pipe.bc.alpha, (v) => setPipe({ ...pipe, bc: { ...pipe.bc, alpha: v } }), 0.3, 3, 0.05)}
+              {slider("Parlaklık β", pipe.bc.beta, (v) => setPipe({ ...pipe, bc: { ...pipe.bc, beta: v } }), -100, 100, 1)}
             </div>
           )}
           <label className="toggle">
@@ -186,12 +235,8 @@ export default function DetectStudio() {
           </label>
           {pipe.clahe.on && (
             <div className="controls">
-              <div className="field"><label>Clip limit</label>
-                <div className="slider-row"><input type="range" min={0.5} max={10} step={0.5} value={pipe.clahe.clip} onChange={(e) => setPipe({ ...pipe, clahe: { ...pipe.clahe, clip: +e.target.value } })} />
-                  <input type="number" step={0.5} value={pipe.clahe.clip} onChange={(e) => setPipe({ ...pipe, clahe: { ...pipe.clahe, clip: +e.target.value } })} /></div></div>
-              <div className="field"><label>Blok ızgarası</label>
-                <div className="slider-row"><input type="range" min={2} max={16} step={1} value={pipe.clahe.tiles} onChange={(e) => setPipe({ ...pipe, clahe: { ...pipe.clahe, tiles: +e.target.value } })} />
-                  <input type="number" value={pipe.clahe.tiles} onChange={(e) => setPipe({ ...pipe, clahe: { ...pipe.clahe, tiles: +e.target.value } })} /></div></div>
+              {slider("Clip limit", pipe.clahe.clip, (v) => setPipe({ ...pipe, clahe: { ...pipe.clahe, clip: v } }), 0.5, 10, 0.5)}
+              {slider("Blok ızgarası", pipe.clahe.tiles, (v) => setPipe({ ...pipe, clahe: { ...pipe.clahe, tiles: v } }), 2, 16, 1)}
               <div className="seg">
                 <button aria-pressed={pipe.clahe.impl === "opencv"} onClick={() => setPipe({ ...pipe, clahe: { ...pipe.clahe, impl: "opencv" } })}>OpenCV</button>
                 <button aria-pressed={pipe.clahe.impl === "manual"} onClick={() => setPipe({ ...pipe, clahe: { ...pipe.clahe, impl: "manual" } })}>Elle yazılmış</button>
@@ -199,98 +244,109 @@ export default function DetectStudio() {
             </div>
           )}
           <button className="btn btn--sm" onClick={() => setPipe(DEFAULT_PIPELINE)}>Zinciri sıfırla</button>
-        </section>
+        </div>
+        <div className="stack">
+          <div className="grid-2">
+            <div className="stack" style={{ gap: 6 }}>
+              <div className="row" style={{ gap: 8 }}><b>Orijinal</b><span className="chip">{srcName}</span></div>
+              <ImageView im={s1?.im ?? src} gt={gt} />
+              <Histogram hist={hSrc} cdf height={90} label={statOf(src, hSrc)} />
+            </div>
+            <div className="stack" style={{ gap: 6 }}>
+              <div className="row" style={{ gap: 8 }}><b>Ön işlenmiş</b><span className="chip">{stages.length > 1 ? stages.slice(1).map((s) => s.title).join(" → ") : "işlem yok (ham)"}</span></div>
+              <ImageView im={sN?.im ?? null} />
+              <Histogram hist={hProc} cdf height={90} label={statOf(processed, hProc)} />
+            </div>
+          </div>
+          {stages.length > 2 && (
+            <div className="stack" style={{ gap: 8 }}>
+              <div className="label">Ara adımlar</div>
+              <div className="grid-4">
+                {stages.map((s, i) => (
+                  <div key={s.key} className="stack" style={{ gap: 4 }}>
+                    <span className="small"><b>{i}. {s.title}</b> <span className="muted">{s.detail}{s.ms ? ` · ${s.ms.toFixed(0)} ms` : ""}</span></span>
+                    <ImageView im={s.im} />
+                    <Histogram hist={lumaHistogram(s.im)} height={50} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <p className="small muted">Histogramlar gri seviye (Y) dağılımıdır; turuncu eğri kümülatif dağılım (CDF). Yeşil kesikli kutular referans (ground truth) yüzlerdir.</p>
+        </div>
+      </section>
 
-        <section className="card stack">
+      {/* ============ AŞAMA 3: TESPİT ============ */}
+      <section className="card stage" id="asama-3">
+        <div className="stage-side stack">
           <div className="row"><span className="num">3</span><h3>Tespit</h3></div>
           <div className="seg">
             <button aria-pressed={which === "both"} onClick={() => setWhich("both")}>İkisi de</button>
             <button aria-pressed={which === "yolo"} onClick={() => setWhich("yolo")}>YOLO</button>
             <button aria-pressed={which === "haar"} onClick={() => setWhich("haar")}>Viola-Jones</button>
           </div>
-          <div className="chips">
-            <span className={`chip ${models.yolo ? "chip--ok" : ""}`}>{models.yolo ? "✓" : <span className="spin" />} YOLOv8n-face</span>
-            <span className={`chip ${models.haar ? "chip--ok" : ""}`}>{models.haar ? "✓" : <span className="spin" />} OpenCV Haar</span>
+          <div className="controls">
+            <div className="label"><Icon name="sliders" size={14} /> YOLO parametreleri</div>
+            {slider("Güven eşiği (conf)", yoloP.conf, (v) => setYoloP({ ...yoloP, conf: v }), 0.05, 0.95, 0.05)}
+            {slider("NMS IoU", yoloP.nmsIoU, (v) => setYoloP({ ...yoloP, nmsIoU: v }), 0.1, 0.9, 0.05)}
           </div>
-          <details>
-            <summary className="label" style={{ cursor: "pointer" }}><Icon name="sliders" size={14} /> Dedektör parametreleri</summary>
-            <div className="controls" style={{ marginTop: 8 }}>
-              <div className="field"><label>YOLO güven eşiği (conf)</label>
-                <div className="slider-row"><input type="range" min={0.05} max={0.95} step={0.05} value={yoloP.conf} onChange={(e) => setYoloP({ ...yoloP, conf: +e.target.value })} /><input type="number" step={0.05} value={yoloP.conf} onChange={(e) => setYoloP({ ...yoloP, conf: +e.target.value })} /></div></div>
-              <div className="field"><label>YOLO NMS IoU</label>
-                <div className="slider-row"><input type="range" min={0.1} max={0.9} step={0.05} value={yoloP.nmsIoU} onChange={(e) => setYoloP({ ...yoloP, nmsIoU: +e.target.value })} /><input type="number" step={0.05} value={yoloP.nmsIoU} onChange={(e) => setYoloP({ ...yoloP, nmsIoU: +e.target.value })} /></div></div>
-              <div className="field"><label>Haar scaleFactor</label>
-                <div className="slider-row"><input type="range" min={1.02} max={1.5} step={0.01} value={haarP.scaleFactor} onChange={(e) => setHaarP({ ...haarP, scaleFactor: +e.target.value })} /><input type="number" step={0.01} value={haarP.scaleFactor} onChange={(e) => setHaarP({ ...haarP, scaleFactor: +e.target.value })} /></div></div>
-              <div className="field"><label>Haar minNeighbors</label>
-                <div className="slider-row"><input type="range" min={1} max={15} step={1} value={haarP.minNeighbors} onChange={(e) => setHaarP({ ...haarP, minNeighbors: +e.target.value })} /><input type="number" value={haarP.minNeighbors} onChange={(e) => setHaarP({ ...haarP, minNeighbors: +e.target.value })} /></div></div>
-              <div className="field"><label>Haar minSize (px)</label>
-                <div className="slider-row"><input type="range" min={12} max={120} step={2} value={haarP.minSize} onChange={(e) => setHaarP({ ...haarP, minSize: +e.target.value })} /><input type="number" value={haarP.minSize} onChange={(e) => setHaarP({ ...haarP, minSize: +e.target.value })} /></div></div>
-              <button className="btn btn--sm" onClick={() => { setHaarP(HAAR_DEFAULTS); setYoloP(YOLO_DEFAULTS); }}>Deney ayarlarına dön</button>
-              <span className="hint small muted">Deneylerde bu değerler tüm görüntülerde sabittir; burada yalnız savunmada gösterim içindir.</span>
-            </div>
-          </details>
+          <div className="controls">
+            <div className="label"><Icon name="sliders" size={14} /> Viola-Jones parametreleri</div>
+            {slider("scaleFactor", haarP.scaleFactor, (v) => setHaarP({ ...haarP, scaleFactor: v }), 1.02, 1.5, 0.01)}
+            {slider("minNeighbors", haarP.minNeighbors, (v) => setHaarP({ ...haarP, minNeighbors: v }), 1, 15, 1)}
+            {slider("minSize (px)", haarP.minSize, (v) => setHaarP({ ...haarP, minSize: v }), 12, 120, 2)}
+          </div>
+          <button className="btn btn--sm" onClick={() => { setHaarP(HAAR_DEFAULTS); setYoloP(YOLO_DEFAULTS); }}>Deney ayarlarına dön</button>
+          <span className="hint small muted">Deneylerde bu değerler tüm görüntülerde sabittir; burada yalnız savunmada gösterim içindir.</span>
+          <label className="toggle"><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} /><span><span className="t-title">Otomatik tespit</span><br /><span className="t-sub">görüntü/ayar değişince yeniden çalıştır</span></span></label>
           <button className="btn btn--accent" style={{ padding: "14px 18px", fontSize: "1rem" }} disabled={!processed || !!busy || (!models.yolo && !models.haar)} onClick={() => detect()}>
             {busy ? <><span className="spin" /> {busy}</> : <><Icon name="play" size={16} /> Tespit Et</>}
           </button>
           <button className="btn btn--sm" disabled={!yolo && !haar} onClick={download}><Icon name="download" size={14} /> Sonucu PNG indir</button>
-        </section>
-      </div>
-
-      {/* ön işleme zinciri: adım adım */}
-      {stages.length > 1 && (
-        <section className="card">
-          <h3 style={{ marginBottom: 12 }}>Ön işleme adım adım</h3>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${stages.length}, minmax(180px, 1fr))`, gap: 12, overflowX: "auto" }}>
-            {stages.map((s, i) => {
-              const g = toGray(s.im), ms = meanStd(g), h = lumaHistogram(s.im);
-              return (
-                <div key={s.key} className="stack" style={{ gap: 6 }}>
-                  <div className="row" style={{ gap: 6 }}><span className="num" style={{ width: 26, height: 26, fontSize: 13 }}>{i}</span><b>{s.title}</b></div>
-                  <ImageView im={s.im} />
-                  <Histogram hist={h} cdf height={70} />
-                  <span className="small muted">{s.detail} · μ={ms.mean.toFixed(0)} σ={ms.std.toFixed(0)} H={entropy(h).toFixed(2)} bit{s.ms ? ` · ${s.ms.toFixed(0)} ms` : ""}</span>
+        </div>
+        <div className="stack">
+          {models3.map((m) => (
+            <div key={m.key} className="result-row" id={m.key === "yolo" ? "yolo-out" : "haar-out"}>
+              <div className="stack" style={{ gap: 6 }}>
+                <div className="row" style={{ gap: 8 }}><Icon name={m.icon} /><b>{m.title}</b><span className={`chip ${m.chip}`}>{m.d ? `${m.d.boxes.length} yüz` : "–"}</span></div>
+                {m.d ? <ImageView im={processed} boxes={m.d.boxes} labels={m.labels} color={m.color} gt={gt} />
+                  : <div className="panel-body small muted">{which === (m.key === "yolo" ? "haar" : "yolo") ? "Bu model seçili değil" : "Henüz çalıştırılmadı — Tespit Et'e bas"}</div>}
+              </div>
+              <div className="stack" style={{ gap: 10, alignContent: "start" }}>
+                <div className="grid-2" style={{ gap: 10 }}>
+                  <div className="stat"><span className="k"><Icon name="users" size={13} /> Kişi sayısı</span><span className="v">{m.d?.boxes.length ?? "–"}{gt && <span className="muted" style={{ fontSize: "1rem" }}> / {gt.length} gerçek</span>}</span></div>
+                  <div className="stat"><span className="k"><Icon name="clock" size={13} /> Uçtan uca</span><span className="v">{m.d ? (m.d.totalMs / 1000).toFixed(3) : "–"}<span className="muted" style={{ fontSize: "1rem" }}> sn</span></span></div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* sonuç panelleri */}
-      <div className="grid-4">
-        <div className="panel"><div className="panel-head"><Icon name="image" /> Orijinal <span className="chip">{srcName}</span></div>
-          <div className="panel-body"><ImageView im={src} gt={gt} /></div>
-          <div className="panel-foot">{gt ? <>Referans: <b>{gt.length}</b> yüz (yeşil kesikli)</> : "Referans etiket yok"}</div></div>
-        <div className="panel"><div className="panel-head"><Icon name="layers" /> Ön işleme sonucu</div>
-          <div className="panel-body"><ImageView im={processed} /></div>
-          <div className="panel-foot">{stages.length > 1 ? stages.slice(1).map((s) => s.title).join(" → ") : "Ön işleme yok (ham)"}</div></div>
-        <div className="panel" id="yolo-out"><div className="panel-head"><Icon name="cpu" /> YOLO sonucu <span className="chip chip--yolo">{yolo ? `${yolo.boxes.length} yüz` : "–"}</span></div>
-          <div className="panel-body"><ImageView im={yolo ? processed : null} boxes={yolo?.boxes} labels={yolo?.scores.map((s) => `face ${s.toFixed(2)}`)} color="#7c6fd0" gt={gt} /></div>
-          <div className="panel-foot">{yolo ? <>çıkarım {yolo.inferenceMs.toFixed(0)} ms · uçtan uca {yolo.totalMs.toFixed(0)} ms</> : "Henüz çalıştırılmadı"}</div></div>
-        <div className="panel" id="haar-out"><div className="panel-head"><Icon name="grid" /> Viola-Jones sonucu <span className="chip chip--haar">{haar ? `${haar.boxes.length} yüz` : "–"}</span></div>
-          <div className="panel-body"><ImageView im={haar ? processed : null} boxes={haar?.boxes} labels={haar?.boxes.map(() => "yüz")} color="#e0795b" gt={gt} /></div>
-          <div className="panel-foot">{haar ? <>detectMultiScale {haar.inferenceMs.toFixed(0)} ms · uçtan uca {haar.totalMs.toFixed(0)} ms</> : "Henüz çalıştırılmadı"}</div></div>
-      </div>
-
-      {(yolo || haar) && (
-        <section className="card">
-          <div className="grid-4">
-            <div className="stat"><span className="k"><Icon name="users" size={14} /> Kişi sayısı (YOLO / VJ)</span>
-              <span className="v">{yolo?.boxes.length ?? "–"} / {haar?.boxes.length ?? "–"}</span>
-              {gt && <span className="k">gerçek: {gt.length}</span>}</div>
-            <div className="stat"><span className="k"><Icon name="clock" size={14} /> YOLO süre</span><span className="v">{yolo ? (yolo.totalMs / 1000).toFixed(3) : "–"} sn</span></div>
-            <div className="stat"><span className="k"><Icon name="clock" size={14} /> Viola-Jones süre</span><span className="v">{haar ? (haar.totalMs / 1000).toFixed(3) : "–"} sn</span></div>
-            <div className="stat"><span className="k"><Icon name="check" size={14} /> Değerlendirme (IoU ≥ 0.5)</span>
-              {gt ? (
-                <span className="small">
-                  {ey && <>YOLO: TP {ey.tp} · FP {ey.fp} · FN {ey.fn} · F1 {ey.f1.toFixed(2)}<br /></>}
-                  {eh && <>VJ: TP {eh.tp} · FP {eh.fp} · FN {eh.fn} · F1 {eh.f1.toFixed(2)}</>}
-                </span>
-              ) : <span className="small muted">Etiketli örnek seçildiğinde hesaplanır</span>}
+                {m.e ? (
+                  <div className="chips">
+                    <span className="chip chip--ok">TP {m.e.tp}</span><span className={`chip ${m.e.fp ? "chip--err" : ""}`}>FP {m.e.fp}</span><span className={`chip ${m.e.fn ? "chip--err" : ""}`}>FN {m.e.fn}</span>
+                    <span className="chip">P {m.e.precision.toFixed(2)}</span><span className="chip">R {m.e.recall.toFixed(2)}</span><span className="chip">F1 {m.e.f1.toFixed(2)}</span>
+                  </div>
+                ) : <span className="small muted">{gt ? "" : "Etiketli örnek seçilince TP/FP/FN hesaplanır."}</span>}
+                {m.d && <span className="small muted">{m.timeLabel}: {m.d.inferenceMs.toFixed(0)} ms{m.key === "yolo" && m.d.scores.length ? ` · skorlar: ${m.d.scores.map((s) => s.toFixed(2)).join(", ")}` : ""}</span>}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          ))}
+          {(yolo || haar) && (
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th className="l">Karşılaştırma</th><th>YOLOv8n-face</th><th>Viola-Jones</th></tr></thead>
+                <tbody>
+                  {cmpRows.map(([name, get, better, fmt]) => {
+                    const a = get(models3[0]), b = get(models3[1]);
+                    const win = a != null && b != null && a !== b ? ((better === "max" ? a > b : a < b) ? 0 : 1) : -1;
+                    return (
+                      <tr key={name}><td className="l">{name}</td>
+                        <td className={win === 0 ? "best" : ""}>{a == null ? "–" : fmt(a)}</td>
+                        <td className={win === 1 ? "best" : ""}>{b == null ? "–" : fmt(b)}</td></tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

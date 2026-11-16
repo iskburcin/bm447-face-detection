@@ -14,7 +14,7 @@ Klasik yöntem (Viola-Jones / Haar Cascade) ile önceden eğitilmiş YOLO yüz m
 3. [Hızlı başlangıç](#hızlı-başlangıç)
 4. [Python deney hattı](#python-deney-hattı)
 5. [Web uygulaması (Next.js)](#web-uygulaması-nextjs)
-6. [Vercel'e dağıtım](#vercele-dağıtım)
+6. [Vercel'e dağıtım](#vercele-dağıtım) · [GitHub Pages](#github-pagestte-yayınlama)
 7. [Docker ile çalıştırma](#docker-ile-çalıştırma)
 8. [Kendi veri kümenizi kullanma](#kendi-veri-kümenizi-kullanma)
 9. [Modeller, sürümler ve kaynaklar](#modeller-sürümler-ve-kaynaklar)
@@ -144,6 +144,24 @@ npx vercel --prod
 ```
 
 Notlar: Vercel'deki çıktı statik sayfalar + statik varlıklardan oluşur (sunucu fonksiyonu yok). `output: "standalone"` Vercel'de zararsızdır (Vercel kendi çıktısını kullanır). Kamera için site HTTPS üzerinden açılmalıdır (Vercel varsayılanı). Kimliği belirlenebilir grup fotoğraflarını **herkese açık** Vercel sürümüne koymayın; demo kümesiyle yayımlayın.
+
+## GitHub Pages'te yayınlama
+
+Site tamamen statik olduğu için (tespit tarayıcıda çalışır, sunucu kodu yok) GitHub Pages'te de çalışır:
+<https://iskburcin.github.io/bm447-face-detection/>
+
+* `.github/workflows/pages.yml`: `main`'e her push'ta `npm run build:pages` ile `out/` klasörünü üretir ve Pages'e yükler.
+* Tek seferlik ayar: repo **Settings → Pages → Source: GitHub Actions**.
+* `build:pages`, `GITHUB_PAGES=true` ile `output: "export"` + `basePath=/<repo-adı>` kullanır; tüm model/veri/WASM yolları `lib/base.ts` içindeki `BASE` önekini alır.
+* Yerelde denemek için:
+
+```bash
+npm run build:pages
+```
+
+(Çıktı `out/` klasöründedir; `/bm447-face-detection/` alt yolunda sunulmalıdır.)
+
+Not: GitHub Pages herkese açıktır — kimliği belirlenebilir grup fotoğraflarını oraya koymayın; yalnız demo kümesiyle yayımlayın.
 
 ## Docker ile çalıştırma
 

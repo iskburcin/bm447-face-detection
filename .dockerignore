@@ -12,3 +12,5 @@ public/vendor
 AGENTS.md
 CLAUDE.md
 *.log
+out
+.github

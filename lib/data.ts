@@ -1,3 +1,4 @@
+import { BASE } from "@/lib/base";
 import { Box } from "./metrics";
 
 export type DatasetItem = { file: string; condition: string; width: number; height: number; faces: Box[]; count: number; note?: string };
@@ -15,7 +16,7 @@ export const DET_LABELS: Record<string, string> = { viola_jones: "Viola-Jones (H
 export const COND_LABELS: Record<string, string> = { normal: "Normal ışık", low_light: "Düşük ışık", backlight: "Ters ışık" };
 
 export async function fetchDataset(): Promise<Dataset> {
-  const r = await fetch("/dataset/annotations.json");
+  const r = await fetch(BASE + "/dataset/annotations.json");
   if (!r.ok) throw new Error("dataset/annotations.json bulunamadı");
   return r.json();
 }
