@@ -1,0 +1,410 @@
+{
+  "name": "BM447 sentetik demo yüz veri kümesi",
+  "warning": "Demo amaçlıdır. Teslimde grup üyelerinin onaylı fotoğraflarıyla değiştirilmelidir.",
+  "source": "scikit-image data.astronaut (NASA, public domain)",
+  "box_format": "[x, y, w, h] piksel, sol-üst köşe",
+  "conditions": {
+    "normal": "Normal ışık",
+    "low_light": "Düşük ışık",
+    "backlight": "Ters ışık"
+  },
+  "seed": 42,
+  "images": [
+    {
+      "file": "images/normal_01.jpg",
+      "condition": "normal",
+      "width": 512,
+      "height": 512,
+      "faces": [
+        [
+          176.0,
+          58.0,
+          96.0,
+          124.0
+        ]
+      ],
+      "count": 1,
+      "note": "orijinal portre"
+    },
+    {
+      "file": "images/normal_02.jpg",
+      "condition": "normal",
+      "width": 480,
+      "height": 480,
+      "faces": [
+        [
+          225.0,
+          54.4,
+          90.0,
+          116.2
+        ]
+      ],
+      "count": 1,
+      "note": "yatay çevrilmiş + ölçeklenmiş"
+    },
+    {
+      "file": "images/normal_03.jpg",
+      "condition": "normal",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          135.0,
+          146.1,
+          91.2,
+          117.8
+        ],
+        [
+          434.0,
+          128.0,
+          96.0,
+          124.0
+        ]
+      ],
+      "count": 2,
+      "note": "grup kolajı (2 yüz)"
+    },
+    {
+      "file": "images/normal_04.jpg",
+      "condition": "normal",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          82.0,
+          187.4,
+          69.1,
+          89.3
+        ],
+        [
+          293.0,
+          118.5,
+          72.0,
+          93.0
+        ],
+        [
+          492.0,
+          177.4,
+          69.1,
+          89.3
+        ]
+      ],
+      "count": 3,
+      "note": "grup kolajı (3 yüz)"
+    },
+    {
+      "file": "images/normal_05.jpg",
+      "condition": "normal",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          60.3,
+          222.0,
+          55.7,
+          71.9
+        ],
+        [
+          210.0,
+          132.8,
+          57.6,
+          74.4
+        ],
+        [
+          372.4,
+          192.8,
+          57.6,
+          74.4
+        ],
+        [
+          518.0,
+          122.0,
+          55.7,
+          71.9
+        ]
+      ],
+      "count": 4,
+      "note": "grup kolajı (4 yüz)"
+    },
+    {
+      "file": "images/lowlight_01.jpg",
+      "condition": "low_light",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          265.0,
+          113.7,
+          110.4,
+          142.6
+        ]
+      ],
+      "count": 1,
+      "note": "düşük ışık (1 yüz)"
+    },
+    {
+      "file": "images/lowlight_02.jpg",
+      "condition": "low_light",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          135.0,
+          146.1,
+          91.2,
+          117.8
+        ],
+        [
+          434.0,
+          128.0,
+          96.0,
+          124.0
+        ]
+      ],
+      "count": 2,
+      "note": "düşük ışık (2 yüz)"
+    },
+    {
+      "file": "images/lowlight_03.jpg",
+      "condition": "low_light",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          82.0,
+          187.4,
+          69.1,
+          89.3
+        ],
+        [
+          293.0,
+          118.5,
+          72.0,
+          93.0
+        ],
+        [
+          492.0,
+          177.4,
+          69.1,
+          89.3
+        ]
+      ],
+      "count": 3,
+      "note": "düşük ışık (3 yüz)"
+    },
+    {
+      "file": "images/lowlight_04.jpg",
+      "condition": "low_light",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          60.3,
+          222.0,
+          55.7,
+          71.9
+        ],
+        [
+          210.0,
+          132.8,
+          57.6,
+          74.4
+        ],
+        [
+          372.4,
+          192.8,
+          57.6,
+          74.4
+        ],
+        [
+          518.0,
+          122.0,
+          55.7,
+          71.9
+        ]
+      ],
+      "count": 4,
+      "note": "düşük ışık (4 yüz)"
+    },
+    {
+      "file": "images/lowlight_05.jpg",
+      "condition": "low_light",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          62.0,
+          76.0,
+          40.3,
+          52.1
+        ],
+        [
+          201.6,
+          235.2,
+          38.4,
+          49.6
+        ],
+        [
+          342.0,
+          86.0,
+          40.3,
+          52.1
+        ],
+        [
+          471.6,
+          245.2,
+          38.4,
+          49.6
+        ],
+        [
+          538.0,
+          54.4,
+          36.5,
+          47.1
+        ]
+      ],
+      "count": 5,
+      "note": "düşük ışık (5 yüz)"
+    },
+    {
+      "file": "images/backlight_01.jpg",
+      "condition": "backlight",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          265.0,
+          113.7,
+          110.4,
+          142.6
+        ]
+      ],
+      "count": 1,
+      "note": "ters ışık (1 yüz)"
+    },
+    {
+      "file": "images/backlight_02.jpg",
+      "condition": "backlight",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          135.0,
+          146.1,
+          91.2,
+          117.8
+        ],
+        [
+          434.0,
+          128.0,
+          96.0,
+          124.0
+        ]
+      ],
+      "count": 2,
+      "note": "ters ışık (2 yüz)"
+    },
+    {
+      "file": "images/backlight_03.jpg",
+      "condition": "backlight",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          82.0,
+          187.4,
+          69.1,
+          89.3
+        ],
+        [
+          293.0,
+          118.5,
+          72.0,
+          93.0
+        ],
+        [
+          492.0,
+          177.4,
+          69.1,
+          89.3
+        ]
+      ],
+      "count": 3,
+      "note": "ters ışık (3 yüz)"
+    },
+    {
+      "file": "images/backlight_04.jpg",
+      "condition": "backlight",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          60.3,
+          222.0,
+          55.7,
+          71.9
+        ],
+        [
+          210.0,
+          132.8,
+          57.6,
+          74.4
+        ],
+        [
+          372.4,
+          192.8,
+          57.6,
+          74.4
+        ],
+        [
+          518.0,
+          122.0,
+          55.7,
+          71.9
+        ]
+      ],
+      "count": 4,
+      "note": "ters ışık (4 yüz)"
+    },
+    {
+      "file": "images/backlight_05.jpg",
+      "condition": "backlight",
+      "width": 640,
+      "height": 480,
+      "faces": [
+        [
+          62.0,
+          76.0,
+          40.3,
+          52.1
+        ],
+        [
+          201.6,
+          235.2,
+          38.4,
+          49.6
+        ],
+        [
+          342.0,
+          86.0,
+          40.3,
+          52.1
+        ],
+        [
+          471.6,
+          245.2,
+          38.4,
+          49.6
+        ],
+        [
+          538.0,
+          54.4,
+          36.5,
+          47.1
+        ]
+      ],
+      "count": 5,
+      "note": "ters ışık (5 yüz)"
+    }
+  ]
+}

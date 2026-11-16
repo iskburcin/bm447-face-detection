@@ -1,0 +1,14 @@
+node_modules
+.next
+.venv
+.git
+.claude
+**/__pycache__
+docs
+public/models
+public/dataset
+public/results
+public/vendor
+AGENTS.md
+CLAUDE.md
+*.log

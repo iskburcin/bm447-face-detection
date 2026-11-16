@@ -1,0 +1,9 @@
+﻿detector,enhancement,images,gt,pred,tp,fp,fn,precision,recall,f1,mae,mean_inference_ms,mean_end_to_end_ms
+viola_jones,original,15,41,17,17,0,24,1.0,0.4146,0.5862,1.6,42.23,51.57
+viola_jones,brightness_contrast,15,41,26,26,0,15,1.0,0.6341,0.7761,1.0,55.93,83.41
+viola_jones,hist_eq,15,41,36,35,1,6,0.9722,0.8537,0.9091,0.4667,80.2,137.76
+viola_jones,clahe,15,41,44,41,3,0,0.9318,1.0,0.9647,0.2,86.07,155.37
+yolo,original,15,41,41,41,0,0,1.0,1.0,1.0,0.0,173.75,182.4
+yolo,brightness_contrast,15,41,41,41,0,0,1.0,1.0,1.0,0.0,145.09,172.92
+yolo,hist_eq,15,41,41,41,0,0,1.0,1.0,1.0,0.0,114.9,166.93
+yolo,clahe,15,41,41,41,0,0,1.0,1.0,1.0,0.0,141.48,204.36

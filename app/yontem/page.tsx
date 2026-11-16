@@ -1,0 +1,111 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Yöntem" };
+
+const MODELS = [
+  ["Viola-Jones (Haar Cascade)", "haarcascade_frontalface_default.xml", "OpenCV 4.x (Rainer Lienhart, 25 aşamalı kaskad)", "https://github.com/opencv/opencv/tree/4.x/data/haarcascades"],
+  ["YOLOv8n-face", "yolov8n-face-lindevs.onnx (v1.0.1)", "Ultralytics YOLOv8n, WIDER FACE ile yüz için eğitilmiş, 640×640, tek sınıf 'face'", "https://github.com/lindevs/yolov8-face/releases/tag/1.0.1"],
+  ["OpenCV.js", "@techstark/opencv-js 4.10.0", "Tarayıcıda Haar + CLAHE (WASM)", "https://www.npmjs.com/package/@techstark/opencv-js"],
+  ["ONNX Runtime Web", "onnxruntime-web 1.31.1", "Tarayıcıda YOLO çıkarımı (WASM)", "https://onnxruntime.ai"],
+  ["Python hattı", "opencv-python-headless 4.10.0.84, onnxruntime 1.24.4, numpy 2.2.6", "Deneyler, tablolar, şekiller", "python/requirements.txt"],
+];
+
+function Flow() {
+  const box = (x: number, y: number, w: number, t: string, s: string, fill = "var(--surface-2)") => (
+    <g key={t + x + y}>
+      <rect x={x} y={y} width={w} height={58} rx={14} fill={fill} stroke="var(--border)" />
+      <text x={x + w / 2} y={y + 25} textAnchor="middle" fontWeight={700} fontSize={14} fill="var(--text)">{t}</text>
+      <text x={x + w / 2} y={y + 44} textAnchor="middle" fontSize={11.5} fill="var(--muted)">{s}</text>
+    </g>
+  );
+  const arr = (x1: number, y1: number, x2: number, y2: number) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--accent-2)" strokeWidth={2} markerEnd="url(#ah)" />;
+  return (
+    <svg viewBox="0 0 1100 330" style={{ width: "100%", height: "auto" }} role="img" aria-label="İşlem hattı akış şeması">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent-2)" /></marker></defs>
+      {box(10, 136, 150, "Görüntü", "kamera / dosya / veri kümesi")}
+      {box(200, 30, 190, "Ham", "işlem yok")}
+      {box(200, 100, 190, "Parlaklık/Kontrast", "g = 1.3·f + 20 (elle)")}
+      {box(200, 170, 190, "Histogram Eşitleme", "CDF eşleme, Y kanalı (elle)")}
+      {box(200, 240, 190, "CLAHE", "clip 2.0, 8×8 blok")}
+      {arr(160, 165, 198, 59)}{arr(160, 165, 198, 129)}{arr(160, 165, 198, 199)}{arr(160, 165, 198, 269)}
+      {box(440, 60, 210, "Gri dönüşüm", "0.2989R+0.5870G+0.1140B")}
+      {box(440, 210, 210, "Letterbox 640×640", "ölçek + öteleme, /255, CHW")}
+      {arr(390, 150, 438, 89)}{arr(390, 180, 438, 239)}
+      {box(690, 60, 200, "Viola-Jones", "Haar + kaskad, sf 1.1, mN 5", "color-mix(in srgb, var(--haar) 18%, var(--surface))")}
+      {box(690, 210, 200, "YOLOv8n-face", "CNN, conf 0.35 + NMS 0.45", "color-mix(in srgb, var(--yolo) 18%, var(--surface))")}
+      {arr(650, 89, 688, 89)}{arr(650, 239, 688, 239)}
+      {box(930, 100, 160, "Değerlendirme", "IoU ≥ 0.5 bire bir")}
+      {box(930, 190, 160, "Raporlama", "TP FP FN P R F1 MAE ms")}
+      {arr(890, 89, 928, 125)}{arr(890, 239, 928, 135)}{arr(1010, 158, 1010, 188)}
+    </svg>
+  );
+}
+
+export default function Page() {
+  return (
+    <>
+      <div className="page-head">
+        <span className="eyebrow">Yöntem, mimari ve etik</span>
+        <h1>Nasıl çalışıyor?</h1>
+        <p>Proje iki parçadan oluşur: tekrarlanabilir deneyler için bir <b>Python/OpenCV hattı</b> ve canlı gösterim için tamamen tarayıcıda çalışan bir <b>Next.js web uygulaması</b>. İkisi aynı modelleri, aynı parametreleri ve aynı (elle yazılmış) algoritmaları kullanır.</p>
+      </div>
+
+      <div className="card"><h3 style={{ marginBottom: 12 }}>Akış şeması</h3><Flow /></div>
+
+      <div className="grid-2" style={{ marginTop: 16 }}>
+        <div className="card stack">
+          <h3>Mimari seçimi: neden tarayıcıda?</h3>
+          <ul className="small" style={{ paddingLeft: 18, display: "grid", gap: 6 }}>
+            <li><b>Vercel uyumu:</b> Vercel sunucusuz fonksiyonları Python + OpenCV + model ağırlıkları için boyut ve soğuk başlangıç sınırlarına takılır. Tespit tarayıcıda WebAssembly ile yapılınca site tamamen statik/edge'den servis edilir; sunucu maliyeti ve gecikmesi yoktur.</li>
+            <li><b>Gizlilik:</b> Yüz görüntüleri kişisel veridir. Görüntü kullanıcının cihazından hiç çıkmaz — ödevdeki etik kurala doğrudan uygundur.</li>
+            <li><b>Tutarlılık:</b> Haar için Python'daki OpenCV'nin WASM derlemesi (OpenCV.js), YOLO için aynı ONNX dosyası kullanılır. Deneyler sayfasında tarayıcı ve Python F1 değerleri yan yana gösterilir.</li>
+            <li><b>Docker:</b> Aynı Next.js uygulaması <code>output: &quot;standalone&quot;</code> ile küçük bir Node imajına paketlenir; ayrı bir Python servisine gerek kalmaz. Python hattı deney/rapor üretimi içindir.</li>
+          </ul>
+        </div>
+        <div className="card stack">
+          <h3>Sabit deney ayarları</h3>
+          <div className="table-wrap"><table><tbody>
+            <tr><td>Parlaklık/kontrast</td><td>α = 1.3, β = +20</td></tr>
+            <tr><td>Histogram eşitleme</td><td>elle, Y kanalı (YCrCb)</td></tr>
+            <tr><td>CLAHE</td><td>clipLimit 2.0, 8×8 blok, Y kanalı</td></tr>
+            <tr><td>Haar</td><td>scaleFactor 1.1, minNeighbors 5, minSize 24×24, gri girdi</td></tr>
+            <tr><td>YOLO</td><td>640×640 letterbox, conf 0.35, NMS IoU 0.45</td></tr>
+            <tr><td>Eşleştirme</td><td>IoU ≥ 0.50, açgözlü bire bir</td></tr>
+            <tr><td>Süre</td><td>çıkarım (yalnız model çağrısı) ve uçtan uca (ön işleme + model + son işleme), ısınma sonrası, CPU</td></tr>
+            <tr><td>Rastgelelik</td><td>demo veri üretimi tohumu 42; dedektörler deterministik</td></tr>
+          </tbody></table></div>
+          <p className="small">Eşikler görüntü başına <b>değiştirilmez</b>. Canlı Tespit sayfasındaki parametre kaydırıcıları yalnız savunmada “bir parametreyi değiştir” isteği için vardır.</p>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginBottom: 10 }}>Önceden eğitilmiş modeller ve kütüphaneler</h3>
+        <div className="table-wrap"><table>
+          <thead><tr><th className="l">Bileşen</th><th className="l">Ad / sürüm</th><th className="l">Açıklama</th><th className="l">Kaynak</th></tr></thead>
+          <tbody>{MODELS.map((m) => <tr key={m[0]}>{m.map((c, i) => <td key={i} className="l" style={{ whiteSpace: "normal" }}>{i === 3 && c.startsWith("http") ? <a href={c} target="_blank" rel="noreferrer">{c}</a> : c}</td>)}</tr>)}</tbody>
+        </table></div>
+      </div>
+
+      <div className="grid-2" style={{ marginTop: 16 }}>
+        <div className="card stack">
+          <h3>Etik ve veri güvenliği</h3>
+          <ul className="small" style={{ paddingLeft: 18, display: "grid", gap: 6 }}>
+            <li>Fotoğraflar yalnız grup üyelerinin bilgilendirilmiş onayıyla çekilir; reşit olmayan kimse yer almaz.</li>
+            <li>Sistem yalnız yüz <b>tespiti</b> ve sayma yapar; yüz tanıma, kimlik etiketleme veya yüz eşleştirme yoktur.</li>
+            <li>Kimliği belirlenebilir grup fotoğrafları açık izin olmadan yayımlanmaz; herkese açık Vercel sürümünde yalnız sentetik demo kümesi bulunur.</li>
+            <li>Web uygulaması görüntüleri sunucuya göndermez, saklamaz, çerez/analitik kullanmaz.</li>
+          </ul>
+        </div>
+        <div className="card stack">
+          <h3>Yapay zekâ kullanım beyanı</h3>
+          <p className="small">
+            Kodun ve dokümantasyonun önemli bir kısmı bir yapay zekâ kodlama asistanı (Claude) yardımıyla hazırlanmıştır. Önceden eğitilmiş
+            modeller (Haar cascade, YOLOv8n-face) dış kaynaklıdır ve yukarıda listelenmiştir. Grup üyeleri kodun doğruluğunu kontrol etmekten
+            ve her adımı açıklayabilmekten sorumludur; bu nedenle her algoritma Ders Laboratuvarı sayfasında ve savunma dokümanında ayrıntılı
+            olarak anlatılmıştır.
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}

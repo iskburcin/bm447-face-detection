@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: yuzlab:latest
+    container_name: yuzlab-web
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # İsteğe bağlı: Python deney hattını konteynerde çalıştırıp results/ klasörünü yeniden üretir.
+  #   docker compose --profile experiments run --rm experiments
+  experiments:
+    profiles: ["experiments"]
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+    image: yuzlab-experiments:latest
+    volumes:
+      - ./dataset:/work/dataset:ro
+      - ./models:/work/models:ro
+      - ./results:/work/results

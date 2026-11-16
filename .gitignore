@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+.venv/
+__pycache__/
+*.pyc
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+# sync-assets.mjs tarafından üretilir
+public/models/
+public/dataset/
+public/results/
+public/vendor/
+
+# yerel araç ayarları
+.claude/
