@@ -24,6 +24,7 @@ F1, per-image count error, MAE and timing.
 * **Key finding:** an image that *looks* better does not always detect better — HE/CLAHE rescue Viola-Jones in the
   dark but add false positives in good light, while YOLO is almost unaffected by preprocessing.
 * Presentation guide in English: [`docs/Defense_Guide_EN.md`](docs/Defense_Guide_EN.md).
+* English report (Word): [`docs/BM447_Face_Detection_Report_EN.docx`](docs/BM447_Face_Detection_Report_EN.docx) — regenerate with `python make_report_en.py` (also redraws the English figures in `results/figures_en/`).
 
 </details>
 
@@ -143,6 +144,8 @@ Diğer betikler:
 | `make_demo_dataset.py` | Kamu malı NASA portresinden sentetik 15 görüntülük demo küme + kesin referans kutular üretir (tohum 42) |
 | `make_flowchart.py` | `docs/akis_semasi.png` akış şemasını üretir |
 | `make_report.py` | `results/` verilerinden Word raporunu (`docs/BM447_Yuz_Tespiti_Raporu.docx`) üretir |
+| `make_report_en.py` | İngilizce Word raporu (`docs/BM447_Face_Detection_Report_EN.docx`); önce `make_figures_en.py` ile grafiklerin İngilizce sürümlerini `results/figures_en/` altına çizer |
+| `make_flowchart.py --en` | İngilizce akış şeması `docs/flowchart_en.png` |
 
 > **Neden OpenCV 4.10 sabitlendi?** OpenCV 5.x `CascadeClassifier`'ı ana paketten çıkardı; Viola-Jones için 4.x gerekir.
 > **Windows notu:** OpenCV, Türkçe karakterli yolları (`GÜZ`) açamaz; kod görüntüleri `np.fromfile + cv2.imdecode` ile okur ve Haar XML'ini gerekirse ASCII geçici klasöre kopyalar.

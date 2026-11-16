@@ -1,4 +1,8 @@
-"""Projenin akış şemasını docs/akis_semasi.png olarak üretir (teslim kontrol listesi maddesi)."""
+"""Projenin akış şemasını üretir (teslim kontrol listesi maddesi).
+    python make_flowchart.py        -> docs/akis_semasi.png      (Türkçe)
+    python make_flowchart.py --en   -> docs/flowchart_en.png     (English)
+"""
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -7,16 +11,33 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
-OUT = Path(__file__).resolve().parents[1] / "docs" / "akis_semasi.png"
+EN = "--en" in sys.argv
+DOCS = Path(__file__).resolve().parents[1] / "docs"
+OUT = DOCS / ("flowchart_en.png" if EN else "akis_semasi.png")
+TR2EN = {
+    "BM447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı": "BM447 - Face Detection under Challenging Conditions: Processing Flow",
+    "1. Görüntü toplama": "1. Image collection", "≥15 görüntü, 3 koşul × ≥5": "≥15 images, 3 conditions × ≥5",
+    "Etiketleme": "Annotation", "GT kutular + gerçek sayı": "GT boxes + true count",
+    "Ham (orijinal)": "Raw (original)", "Parlaklık/Kontrast": "Brightness/Contrast", "g = 1.3·f + 20  (elle)": "g = 1.3·f + 20  (by hand)",
+    "Histogram Eşitleme": "Histogram Equalization", "CDF→LUT, Y kanalı (elle)": "CDF→LUT, Y channel (by hand)", "clip 2.0, 8×8 blok": "clip 2.0, 8×8 tiles",
+    "3. Görüntü iyileştirme (her biri ayrı ayrı)": "3. Image enhancement (each one separately)",
+    "Gri dönüşüm": "Grayscale", "ölçek+öteleme, /255, CHW": "scale+shift, /255, CHW", "Haar+kaskad sf1.1 mN5": "Haar+cascade sf1.1 mN5",
+    "5. Değerlendirme": "5. Evaluation", "IoU ≥ 0.50 bire bir": "IoU ≥ 0.50 one-to-one", "Raporlama": "Reporting",
+    "2. Baseline + 4. Kontrollü karşılaştırma: aynı veri, sabit ayarlar": "2. Baseline + 4. Controlled comparison: same data, fixed settings",
+    "Sonuç: Görsel olarak daha iyi görüntü ≠ her zaman daha iyi tespit": "Result: a visually better image ≠ always better detection",
+    "VJ: HE/CLAHE düşük ışıkta recall'u artırır ama normal ışıkta FP ekler · YOLO: ön işlemeye duyarsız":
+        "VJ: HE/CLAHE raise recall in low light but add FP in normal light · YOLO: insensitive to preprocessing",
+}
+L = (lambda t: TR2EN.get(t, t)) if EN else (lambda t: t)
 
 ACC, SOFT, WARM, OK, TXT, MUT = "#564d80", "#e7e5f6", "#e0795b", "#1f9d55", "#1d1b26", "#6b6880"
 
 
 def box(ax, x, y, w, h, title, sub="", fc=SOFT, ec=ACC):
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.12", fc=fc, ec=ec, lw=1.4))
-    ax.text(x + w / 2, y + h * 0.62, title, ha="center", va="center", fontsize=10.5, fontweight="bold", color=TXT)
+    ax.text(x + w / 2, y + h * 0.62, L(title), ha="center", va="center", fontsize=10.5, fontweight="bold", color=TXT)
     if sub:
-        ax.text(x + w / 2, y + h * 0.28, sub, ha="center", va="center", fontsize=8, color=MUT)
+        ax.text(x + w / 2, y + h * 0.28, L(sub), ha="center", va="center", fontsize=8, color=MUT)
     return (x, y, w, h)
 
 
@@ -32,7 +53,7 @@ def main():
     ax.set_xlim(0, 15)
     ax.set_ylim(0, 7.2)
     ax.axis("off")
-    ax.text(7.5, 6.9, "BM447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı", ha="center", fontsize=14, fontweight="bold", color=TXT)
+    ax.text(7.5, 6.9, L("BM447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı"), ha="center", fontsize=14, fontweight="bold", color=TXT)
 
     a1 = box(ax, 0.2, 5.3, 2.4, 0.9, "1. Görüntü toplama", "≥15 görüntü, 3 koşul × ≥5")
     a2 = box(ax, 0.2, 3.9, 2.4, 0.9, "Etiketleme", "GT kutular + gerçek sayı")
@@ -46,7 +67,7 @@ def main():
     e3 = box(ax, 3.3, 2.2, 2.6, 0.8, "CLAHE", "clip 2.0, 8×8 blok")
     for e in (e0, e1, e2, e3):
         arrow(ax, a3, e)
-    ax.text(4.6, 1.75, "3. Görüntü iyileştirme (her biri ayrı ayrı)", ha="center", fontsize=8.5, color=MUT, style="italic")
+    ax.text(4.6, 1.75, L("3. Görüntü iyileştirme (her biri ayrı ayrı)"), ha="center", fontsize=8.5, color=MUT, style="italic")
 
     g = box(ax, 6.7, 4.6, 2.5, 0.9, "Gri dönüşüm", "0.2989R+0.5870G+0.1140B")
     lb = box(ax, 6.7, 2.6, 2.5, 0.9, "Letterbox 640×640", "ölçek+öteleme, /255, CHW")
@@ -65,7 +86,7 @@ def main():
     arrow(ax, yo, ev)
     arrow(ax, ev, rp, "b", "t")
 
-    ax.text(10.4, 1.75, "2. Baseline + 4. Kontrollü karşılaştırma: aynı veri, sabit ayarlar", ha="center", fontsize=8.5, color=MUT, style="italic")
+    ax.text(10.4, 1.75, L("2. Baseline + 4. Kontrollü karşılaştırma: aynı veri, sabit ayarlar"), ha="center", fontsize=8.5, color=MUT, style="italic")
     box(ax, 3.3, 0.35, 11.5, 0.9, "Sonuç: Görsel olarak daha iyi görüntü ≠ her zaman daha iyi tespit",
         "VJ: HE/CLAHE düşük ışıkta recall'u artırır ama normal ışıkta FP ekler · YOLO: ön işlemeye duyarsız", fc="#fff6e0", ec="#c98a12")
     OUT.parent.mkdir(exist_ok=True)
