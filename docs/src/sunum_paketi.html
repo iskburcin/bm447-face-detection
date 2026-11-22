@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>BM447 Sunum Paketi / Presentation Pack</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  :root { --acc: #564d80; --soft: #eeecf7; --warm: #e0795b; --muted: #6b6880; --text: #1d1b26; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; color: var(--text); font-size: 10.6pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 22pt; color: var(--acc); margin: 0 0 4mm; line-height: 1.15; }
+  h2 { font-size: 15pt; color: var(--acc); margin: 0 0 3mm; padding-bottom: 1.5mm; border-bottom: 2px solid var(--soft); }
+  h3 { font-size: 12pt; margin: 5mm 0 1.5mm; color: var(--text); }
+  p { margin: 0 0 2.2mm; }
+  ul, ol { margin: 0 0 2.5mm; padding-left: 6mm; }
+  li { margin-bottom: 1mm; }
+  a { color: var(--acc); }
+  code { font-family: Consolas, monospace; font-size: 9pt; background: var(--soft); padding: 0 1.2mm; border-radius: 2px; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .cover { padding-top: 40mm; }
+  .cover .sub { font-size: 13pt; color: var(--muted); margin-bottom: 10mm; }
+  .toc { margin-top: 10mm; border-left: 4px solid var(--acc); padding: 3mm 0 3mm 6mm; }
+  .toc div { margin-bottom: 2mm; font-size: 11.5pt; }
+  .lang { display: inline-block; font-size: 8pt; font-weight: 700; color: #fff; background: var(--acc); padding: 0.3mm 2mm; border-radius: 3mm; margin-right: 2mm; vertical-align: 1px; }
+  .lang.en { background: var(--warm); }
+  .box { background: var(--soft); border-radius: 3mm; padding: 3mm 4mm; margin: 2.5mm 0 3mm; }
+  .warn { background: #fff4df; border-left: 4px solid #c98a12; border-radius: 2mm; padding: 2.5mm 4mm; margin: 2mm 0 4mm; font-size: 9.6pt; }
+  .say { border-left: 4px solid var(--acc); padding: 1mm 0 1mm 4mm; margin: 2mm 0 3mm; }
+  .say.en { border-color: var(--warm); }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 3.5mm; font-size: 9.4pt; }
+  th, td { border: 1px solid #dcd9ea; padding: 1.4mm 2mm; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  .q { page-break-inside: avoid; margin-bottom: 4.5mm; }
+  .q .qt { font-weight: 700; margin-bottom: 1mm; }
+  .q .a { margin: 0 0 1.5mm 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .sec { page-break-inside: avoid; }
+  .small { font-size: 9pt; color: var(--muted); }
+  .time { float: right; font-size: 9pt; color: var(--muted); font-weight: 400; }
+</style>
+</head>
+<body>
+
+<!-- ============================ KAPAK ============================ -->
+<section class="page cover">
+  <h1>Zorlu Işıkta Yüz Tespiti<br>Face Detection in Challenging Light</h1>
+  <div class="sub">BM447 Sayısal Görüntü İşleme · Düzce Üniversitesi · Prof. Dr. Pakize Erdoğmuş<br>
+  Sunum paketi / Presentation pack — Türkçe &amp; English</div>
+  <div class="toc">
+    <div><b>1.</b> Modelimiz nereden geldi, nasıl eğitildi? — sade anlatım <span class="small">(TR + EN)</span></div>
+    <div><b>2.</b> Sunum konuşması / Presentation speech <span class="small">(EN — söylenecek · TR — anlamak için)</span></div>
+    <div><b>3.</b> Hocanın sorabileceği sorular ve cevaplar <span class="small">(TR + EN)</span></div>
+    <div><b>4.</b> Kaynaklar ve linkler <span class="small">(sorulursa açılacak)</span></div>
+  </div>
+  <div class="warn" style="margin-top:12mm">
+    <b>Önemli:</b> Köşeli parantezli sayılar <b>[...]</b> şu anki <b>demo</b> veri kümesinin sonuçlarıdır. Grup fotoğraflarıyla deneyi yeniden
+    çalıştırdıktan sonra <code>results/summary.csv</code> ve <code>results/summary_by_condition.csv</code> dosyalarından güncelleyin.<br>
+    <b>Important:</b> numbers in <b>[brackets]</b> come from the current <b>demo</b> dataset — update them after rerunning the experiment with the group photos.
+  </div>
+  <p class="small">Canlı site / Live site: https://iskburcin.github.io/bm447-face-detection/ · Kod / Code: https://github.com/iskburcin/bm447-face-detection</p>
+</section>
+
+<!-- ============================ 1. MODEL (TR) ============================ -->
+<section class="page">
+  <h2><span class="lang">TR</span>1. Modelimiz nereden geldi, nasıl eğitildi?</h2>
+
+  <div class="box"><b>Tek cümlelik cevap:</b> Modeli biz eğitmedik. Ödev hazır (önceden eğitilmiş) model kullanmaya izin veriyor. Başka bir geliştiricinin
+  (Lindevs) yüz tespiti için eğittiği <b>YOLOv8n-face</b> modelini aldık; bizim işimiz bu modeli projeye bağlamak, aynı koşullarda
+  Viola-Jones ile karşılaştırmak ve sonuçları ölçmekti.</div>
+
+  <h3>YOLOv8n-face nedir? (sade dille)</h3>
+  <ul>
+    <li><b>YOLO</b> = "You Only Look Once" (Yalnızca bir kez bak). Fotoğrafa tek seferde bakıp "burada yüz var, şu kadar eminim" diyen bir yapay sinir ağı.</li>
+    <li><b>v8</b> = YOLO ailesinin 8. sürümü (Ultralytics firması, 2023).</li>
+    <li><b>n</b> = "nano", yani ailenin en küçük ve en hızlı modeli: yaklaşık <b>3 milyon</b> parametre, 6 MB.</li>
+    <li><b>face</b> = Yalnızca <b>yüz</b> bulmak için eğitilmiş. Normal YOLO "insan, araba, köpek…" gibi 80 nesne bulur; bu model tek bir şey bulur: yüz.</li>
+  </ul>
+
+  <h3>Nasıl eğitildi? (modelin kendi sayfasından)</h3>
+  <p>Eğitim ayarları modelin GitHub sayfasında açıkça yazıyor:</p>
+  <table>
+    <tr><th style="width:38%">Ayar</th><th>Değer</th></tr>
+    <tr><td>Başlangıç noktası</td><td>Ultralytics'in hazır <b>YOLOv8n</b> ağırlıkları (genel nesne tespiti için eğitilmiş). Yani model sıfırdan değil, bu hazır ağırlıklardan başlatılıp yüze uyarlanmış (aktarım öğrenmesi / transfer learning).</td></tr>
+    <tr><td>Eğitim verisi</td><td><b>WIDER FACE</b> — yaklaşık 32 bin fotoğraf, 393 bin etiketli yüz. Kalabalık, karanlık, bulanık, küçük, yan dönmüş yüzler içerir.</td></tr>
+    <tr><td>Epoch (veri kümesinin baştan sona kaç kez gösterildiği)</td><td><b>300</b></td></tr>
+    <tr><td>Batch (aynı anda işlenen fotoğraf sayısı)</td><td><b>16</b></td></tr>
+    <tr><td>Görüntü boyutu</td><td><b>640 × 640</b> piksel</td></tr>
+    <tr><td>Diğer ayarlar</td><td>Ultralytics varsayılanları ("non-default parameters: –"). Varsayılanlar eğitim sırasında fotoğrafların parlaklığını/rengini rastgele değiştirmeyi, aynalamayı ve birkaç fotoğrafı birleştirmeyi (mosaic) içerir.</td></tr>
+    <tr><td>Donanım / süre</td><td>NVIDIA RTX 4090 ekran kartı, <b>2,75 saat</b> (Ultralytics 8.0.206, PyTorch 2.1.0)</td></tr>
+    <tr><td>Doğrulama sonucu (WIDER FACE doğrulama, 3.226 foto, 39.706 yüz)</td><td>Precision 0,853 · Recall 0,593 · mAP@0.5 0,679 · mAP@0.5–0.95 0,373</td></tr>
+    <tr><td>WIDER FACE zorluk seviyeleri (AP %)</td><td>Kolay <b>93,8</b> · Orta <b>91,8</b> · Zor <b>79,4</b> ("zor" = çok küçük ve örtülü yüzler)</td></tr>
+  </table>
+  <p class="small">Kaynak: github.com/lindevs/yolov8-face (README "Training results" tablosu, <code>train.py</code>, <code>results/train/yolov8n-face/results.txt</code>). Kullandığımız dosya: release 1.0.1 (1 Kasım 2024).</p>
+  <p><b>Neden ön işlemeden etkilenmedi?</b> Eğitim sırasında fotoğraflar zaten rastgele aydınlatılıp karartıldı ve WIDER FACE'te karanlık/ters ışıklı çok sayıda yüz var. Model "ışık değişse de yüz yüzdür" demeyi öğrenmiş; bizim parlaklık ayarımız ona yeni bir bilgi vermiyor.</p>
+
+  <h3>Neden YOLOv8? Neden en yeni YOLO değil?</h3>
+  <ol>
+    <li><b>Yüz için eğitilmiş olması gerekiyordu.</b> Ultralytics'in resmi modelleri (en yeniler dahil) yüz sınıfı içermez; ödev genel "person" sınıfını kabul etmiyor. Yüz için eğitilmiş, güvenilir ve iyi belgelenmiş hazır bir model aradık.</li>
+    <li><b>Belgelenmiş ve tekrarlanabilir.</b> Bu modelin eğitim ayarları, veri kümesi ve WIDER FACE sonuçları açıkça yayınlanmış. Ödev "model adı, sürümü ve kaynağı" istediği için bu önemliydi.</li>
+    <li><b>Küçük ve hızlı.</b> Nano boyut normal bir bilgisayarda (ekran kartı olmadan) ve tarayıcıda rahat çalışıyor.</li>
+    <li><b>Projenin sorusu sürüm değil.</b> Biz "klasik yöntem mi, derin öğrenme mi, ön işleme ne yapıyor?" sorusunu araştırıyoruz. Yeni sürümler (YOLOv11/v12 vb.) genel testlerde birkaç puan daha iyi, ama klasik–derin öğrenme farkı çok daha büyük. Sonucumuzu değiştirmesi beklenmez.</li>
+    <li><b>İstenirse değiştirilebilir.</b> Aynı kod, yüz için eğitilmiş daha yeni bir YOLO dosyasıyla da çalışır (ör. akanametov/yolo-face deposundaki YOLOv11n-face / YOLOv12n-face). Bunu denemedik; sorulursa dürüstçe söyleyin.</li>
+  </ol>
+
+  <h3>Viola-Jones modeli nereden?</h3>
+  <p>OpenCV kütüphanesiyle gelen hazır <code>haarcascade_frontalface_default.xml</code> dosyası (Rainer Lienhart). Önden çekilmiş yüzlerle eğitilmiş, 25 aşamalı bir sınıflandırıcı zinciri. Biz yalnızca ayarlarını sabitledik: scaleFactor 1.1, minNeighbors 5, minSize 24×24.</p>
+
+  <div class="box" style="background:#f6f6f6">
+    <b>Yalnızca sorulursa — ONNX nedir?</b> <span class="small">(Ödevin konusu değil, sunumda anlatılmıyor.)</span><br>
+    Eğitilmiş bir modeli farklı programlarda çalıştırabilmek için kullanılan standart dosya biçimi; belgeler için PDF neyse modeller için ONNX odur.
+    Modeli biz dönüştürmedik, sahibi hazır ONNX dosyası olarak yayınlıyor. Bu sayede modeli ağır PyTorch kütüphanesini kurmadan hem Python'da hem tarayıcıda aynı dosyayla çalıştırdık.
+  </div>
+</section>
+
+<!-- ============================ 1. MODEL (EN) ============================ -->
+<section class="page">
+  <h2><span class="lang en">EN</span>1. Where did our model come from, and how was it trained?</h2>
+
+  <div class="box"><b>One-sentence answer:</b> We did not train the model ourselves — the assignment allows pretrained models. We used <b>YOLOv8n-face</b>,
+  a face-detection model trained by another developer (Lindevs). Our work was to plug it into the project, compare it with Viola-Jones
+  under the same conditions, and measure the results.</div>
+
+  <h3>What is YOLOv8n-face? (in plain words)</h3>
+  <ul>
+    <li><b>YOLO</b> = "You Only Look Once": a neural network that looks at the photo once and says "there is a face here, and I am this sure".</li>
+    <li><b>v8</b> = version 8 of the YOLO family (Ultralytics, 2023).</li>
+    <li><b>n</b> = "nano": the smallest and fastest model of the family — about <b>3 million</b> parameters, 6 MB.</li>
+    <li><b>face</b> = trained to find <b>faces only</b>. Standard YOLO finds 80 kinds of objects (person, car, dog…); this one finds a single thing: faces.</li>
+  </ul>
+
+  <h3>How was it trained? (from the model's own page)</h3>
+  <table>
+    <tr><th style="width:38%">Setting</th><th>Value</th></tr>
+    <tr><td>Starting point</td><td>Ultralytics' pretrained <b>YOLOv8n</b> weights (general object detection). The model was not trained from zero; it was started from these weights and adapted to faces (transfer learning).</td></tr>
+    <tr><td>Training data</td><td><b>WIDER FACE</b> — about 32k photos, 393k labelled faces, including crowded, dark, blurry, tiny and turned faces.</td></tr>
+    <tr><td>Epochs (full passes over the data)</td><td><b>300</b></td></tr>
+    <tr><td>Batch size</td><td><b>16</b></td></tr>
+    <tr><td>Image size</td><td><b>640 × 640</b> pixels</td></tr>
+    <tr><td>Other settings</td><td>Ultralytics defaults ("non-default parameters: –"). The defaults include random brightness/color changes, mirroring and mosaic (combining several photos) during training.</td></tr>
+    <tr><td>Hardware / time</td><td>NVIDIA RTX 4090 GPU, <b>2.75 hours</b> (Ultralytics 8.0.206, PyTorch 2.1.0)</td></tr>
+    <tr><td>Validation (WIDER FACE val, 3,226 photos, 39,706 faces)</td><td>Precision 0.853 · Recall 0.593 · mAP@0.5 0.679 · mAP@0.5–0.95 0.373</td></tr>
+    <tr><td>WIDER FACE difficulty levels (AP %)</td><td>Easy <b>93.8</b> · Medium <b>91.8</b> · Hard <b>79.4</b> ("hard" = very small and occluded faces)</td></tr>
+  </table>
+  <p class="small">Source: github.com/lindevs/yolov8-face (README "Training results", <code>train.py</code>, <code>results/train/yolov8n-face/results.txt</code>). File used: release 1.0.1 (1 Nov 2024).</p>
+  <p><b>Why didn't preprocessing affect it?</b> During training the photos were already randomly brightened and darkened, and WIDER FACE contains many dark and backlit faces. The model learned that "a face is a face, whatever the lighting", so our brightness adjustment gives it no new information.</p>
+
+  <h3>Why YOLOv8 and not the newest YOLO?</h3>
+  <ol>
+    <li><b>It had to be trained for faces.</b> Ultralytics' official models (including the newest) have no face class, and the assignment does not accept the generic "person" class. We needed a reliable, well-documented, face-trained model.</li>
+    <li><b>Documented and reproducible.</b> Its training settings, dataset and WIDER FACE scores are published — important because the assignment asks for the model's name, version and source.</li>
+    <li><b>Small and fast.</b> The nano size runs comfortably on a normal computer without a GPU, and even in a web browser.</li>
+    <li><b>Our question is not about versions.</b> We study classical vs. deep learning and the effect of preprocessing. Newer versions (YOLOv11/v12…) score a few points higher on general benchmarks, but the gap between classical and deep learning is much larger, so we would not expect a different conclusion.</li>
+    <li><b>Easy to swap.</b> The same code would run a newer face-trained YOLO file (e.g. YOLOv11n-face / YOLOv12n-face from akanametov/yolo-face). We did not test this — say so honestly if asked.</li>
+  </ol>
+
+  <h3>Where does the Viola-Jones model come from?</h3>
+  <p>The ready-made <code>haarcascade_frontalface_default.xml</code> file shipped with OpenCV (Rainer Lienhart): a 25-stage classifier chain trained on frontal faces. We only fixed its settings: scaleFactor 1.1, minNeighbors 5, minSize 24×24.</p>
+
+  <div class="box" style="background:#f6f6f6">
+    <b>Only if asked — what is ONNX?</b> <span class="small">(Not part of the assignment; not in the talk.)</span><br>
+    A standard file format for trained models so they can run in different programs — what PDF is for documents, ONNX is for models.
+    We did not convert anything: the author publishes the model as a ready ONNX file. That let us run the same file in Python and in the browser without installing the heavy PyTorch library.
+  </div>
+</section>
+
+<!-- ============================ 2. SPEECH (EN) ============================ -->
+<section class="page">
+  <h2><span class="lang en">EN</span>2. Presentation speech <span class="small">(≈ 6 min — this is what you say)</span></h2>
+
+  <h3>1 · Opening <span class="time">≈ 40 s</span></h3>
+  <div class="say en"><p>Good morning, professor. Our project is about face detection and people counting under difficult lighting.</p>
+  <p>We wanted to answer one question: <b>does an image that looks better to the human eye always give better face detection?</b></p>
+  <p>To answer it, we compared a classical detector and a deep-learning detector on the same images, under three lighting conditions, with and without image enhancement, and we measured everything with the same metrics.</p></div>
+
+  <h3>2 · Data <span class="time">≈ 40 s</span></h3>
+  <div class="say en"><p>Our dataset has <b>[15] images</b> with <b>[41] faces</b>, five images for each condition: <b>normal light, low light and backlight</b>.</p>
+  <p>We drew a box around every visible face and recorded the true number of people in each image. Both detectors were tested on exactly the same images and the same labels.</p></div>
+
+  <h3>3 · The two models <span class="time">≈ 1 min 20 s</span></h3>
+  <div class="say en"><p><b>The first model is Viola-Jones</b>, using OpenCV's ready-made frontal-face cascade. It works on the gray image. It slides a small window over the image at many sizes and checks simple brightness patterns — for example, "the eye area is darker than the cheeks". A chain of 25 stages throws away non-face windows very early, which makes it fast. Our fixed settings are: scale factor 1.1, minimum neighbours 5, minimum face size 24 by 24 pixels.</p>
+  <p><b>The second model is YOLOv8n-face</b> — the smallest YOLO version 8 network, trained specifically for faces on the WIDER FACE dataset, which has more than three hundred thousand labelled faces. We did not use the generic "person" class. The image is resized to 640 by 640, the network proposes candidate boxes with a confidence score, we keep boxes above 0.35 and remove duplicate boxes on the same face.</p>
+  <p>The key difference: Viola-Jones relies on <b>brightness rules designed by people</b>; YOLO relies on <b>features it learned from a very large and varied dataset</b>. We expected them to react to lighting differently, and they did.</p></div>
+
+  <h3>4 · Enhancement and setup <span class="time">≈ 1 min</span></h3>
+  <div class="say en"><p>We tested four versions of every image: the <b>raw</b> image; <b>brightness and contrast</b> adjustment; <b>histogram equalization</b>, which <b>we implemented ourselves</b> without any library function — its output is pixel-for-pixel identical to OpenCV's; and <b>CLAHE</b>, which equalizes small tiles of the image separately.</p>
+  <p>All detector settings stayed <b>fixed</b> for every image; we never tuned a threshold for a single image.</p>
+  <p>A prediction counts as correct when it overlaps the true face box by at least 50 percent, and each true face can be matched only once. We report true positives, false positives, missed faces, precision, recall, F1, the counting error per image, its mean over the dataset, and the processing time.</p></div>
+
+  <h3>5 · Results <span class="time">≈ 1 min 30 s</span></h3>
+  <div class="say en"><p><b>YOLO first.</b> On raw images YOLO already reaches <b>F1 [1.00]</b> with <b>no counting error</b>, and it stays there for every enhancement and every lighting condition. Enhancement did not help it; it only added processing time.</p>
+  <p><b>Viola-Jones is the interesting case.</b> On raw images its F1 is only <b>[0.59]</b>: everything it finds is correct, but it finds only <b>[41]%</b> of the faces. Almost all misses are in low light, where it found <b>[0 of 15]</b> faces, and in backlight.</p>
+  <p>Brightness and contrast raised F1 to <b>[0.78]</b>, but it still found <b>[none]</b> of the low-light faces. Histogram equalization raised F1 to <b>[0.91]</b>. CLAHE gave the best result: <b>F1 [0.96]</b>, finding <b>[all]</b> faces.</p>
+  <p><b>But</b> — and this is our main finding — on the <b>normal-light</b> images the same enhancements made Viola-Jones <b>worse</b>: CLAHE added <b>[3]</b> false detections and histogram equalization <b>[1]</b>, where the raw images had none. Equalization also amplifies background texture and noise, and Viola-Jones sees new face-like patterns in them.</p>
+  <p>On speed, Viola-Jones is faster: about <b>[42] ms</b> per image versus <b>[174] ms</b> for YOLO on our computer, but adding CLAHE makes Viola-Jones about three times slower end to end.</p></div>
+
+  <h3>6 · Answer to the research question <span class="time">≈ 40 s</span></h3>
+  <div class="say en"><p>So, does a visually better image always give better detection? <b>No.</b></p>
+  <p>Histogram equalization gives the image with the most contrast — the one that "looks best" — but for Viola-Jones the best result came from CLAHE, and on images that were already well lit, both equalizations <b>hurt</b>. For YOLO, enhancement made <b>no difference</b>.</p>
+  <p>Whether enhancement helps depends on two things: <b>the detector</b> — hand-designed features need it, learned features don't — and <b>the starting image</b> — it helps dark and backlit images and harms good ones. So in practice enhancement should be used <b>only when needed</b>, for example only when the image is dark.</p></div>
+
+  <h3>7 · Limitations and closing <span class="time">≈ 30 s</span></h3>
+  <div class="say en"><p>Our main limitation is the small dataset: [15] images show a clear tendency, not a general statistical result. The frontal cascade also cannot find side-turned faces or faces smaller than 24 pixels.</p>
+  <p>Thank you. We are happy to run both detectors on any image you choose, or to change a parameter and show the effect.</p></div>
+</section>
+
+<!-- ============================ 2. SPEECH (TR) ============================ -->
+<section class="page">
+  <h2><span class="lang">TR</span>2. Konuşmanın Türkçe karşılığı <span class="small">(anlamak ve prova için)</span></h2>
+
+  <h3>1 · Açılış</h3>
+  <div class="say"><p>Günaydın hocam. Projemiz zorlu ışık koşullarında yüz tespiti ve kişi sayma üzerine.</p>
+  <p>Tek bir soruya cevap aradık: <b>İnsan gözüne daha iyi görünen bir görüntü her zaman daha iyi yüz tespiti sağlar mı?</b></p>
+  <p>Bunun için aynı görüntülerde klasik bir dedektörü ve derin öğrenme tabanlı bir dedektörü üç ışık koşulunda, iyileştirmeli ve iyileştirmesiz karşılaştırdık ve hepsini aynı ölçütlerle ölçtük.</p></div>
+
+  <h3>2 · Veri</h3>
+  <div class="say"><p>Veri kümemizde <b>[15] görüntü</b> ve <b>[41] yüz</b> var; normal ışık, düşük ışık ve ters ışık için beşer görüntü.</p>
+  <p>Görünen her yüzün etrafına kutu çizdik ve her görüntüdeki gerçek kişi sayısını kaydettik. İki dedektör de tamamen aynı görüntü ve etiketlerle test edildi.</p></div>
+
+  <h3>3 · İki model</h3>
+  <div class="say"><p><b>Birinci model Viola-Jones</b>; OpenCV'nin hazır ön yüz modelini kullandık. Gri görüntüde çalışır. Görüntü üzerinde farklı boyutlarda küçük bir pencere kaydırır ve basit parlaklık kalıplarına bakar; örneğin "göz bölgesi yanaklardan daha koyudur". 25 aşamalı bir zincir yüz olmayan pencereleri çok erken eler, bu yüzden hızlıdır. Sabit ayarlarımız: scale factor 1.1, minimum komşu 5, en küçük yüz 24×24 piksel.</p>
+  <p><b>İkinci model YOLOv8n-face</b>; YOLO 8. sürümün en küçük ağı, üç yüz binden fazla etiketli yüz içeren WIDER FACE veri kümesinde yalnızca yüz için eğitilmiş. Genel "person" sınıfını kullanmadık. Görüntü 640×640'a getirilir, ağ güven skoruyla aday kutular önerir; 0,35'in üstündekileri tutar, aynı yüze düşen tekrar kutuları sileriz.</p>
+  <p>Temel fark: Viola-Jones <b>insanların tasarladığı parlaklık kurallarına</b>, YOLO ise <b>çok büyük ve çeşitli bir veriden kendi öğrendiği özelliklere</b> dayanır. Işığa farklı tepki vermelerini bekledik; öyle de oldu.</p></div>
+
+  <h3>4 · İyileştirme ve deney düzeni</h3>
+  <div class="say"><p>Her görüntünün dört sürümünü test ettik: <b>ham</b> görüntü; <b>parlaklık ve kontrast</b> ayarı; hiçbir kütüphane fonksiyonu kullanmadan <b>kendimiz yazdığımız histogram eşitleme</b> (çıktısı OpenCV'ninkiyle piksel piksel aynı); ve görüntünün küçük bölgelerini ayrı ayrı eşitleyen <b>CLAHE</b>.</p>
+  <p>Dedektör ayarları her görüntüde <b>sabit</b> kaldı; hiçbir eşiği tek bir görüntüye göre ayarlamadık.</p>
+  <p>Bir tahmin, gerçek yüz kutusuyla en az yüzde 50 örtüşürse doğru sayılır ve her gerçek yüz yalnızca bir kez eşleşebilir. Doğru tespit, yanlış tespit, kaçırılan yüz, precision, recall, F1, görüntü başına sayma hatası, bunun ortalaması ve işlem süresini raporladık.</p></div>
+
+  <h3>5 · Sonuçlar</h3>
+  <div class="say"><p><b>Önce YOLO.</b> Ham görüntüde bile <b>F1 [1,00]</b> ve <b>sıfır sayma hatası</b>; her iyileştirmede ve her ışık koşulunda aynı kaldı. İyileştirme ona yardım etmedi, sadece süreyi uzattı.</p>
+  <p><b>Asıl ilginç olan Viola-Jones.</b> Ham görüntüde F1 yalnızca <b>[0,59]</b>: bulduğu her şey doğru ama yüzlerin sadece <b>%[41]</b>'ini buluyor. Kayıpların neredeyse hepsi düşük ışıkta (15 yüzden <b>[0]</b>) ve ters ışıkta.</p>
+  <p>Parlaklık/kontrast F1'i <b>[0,78]</b>'e çıkardı ama düşük ışıktaki yüzlerin <b>[hiçbirini]</b> yine bulamadı. Histogram eşitleme <b>[0,91]</b>'e çıkardı. En iyi sonuç CLAHE: <b>F1 [0,96]</b>, yüzlerin <b>[hepsi]</b> bulundu.</p>
+  <p><b>Ama</b> — asıl bulgumuz bu — <b>normal ışıklı</b> görüntülerde aynı iyileştirmeler Viola-Jones'u <b>kötüleştirdi</b>: ham görüntüde hiç yanlış tespit yokken CLAHE <b>[3]</b>, histogram eşitleme <b>[1]</b> yanlış tespit ekledi. Eşitleme arka plandaki dokuyu ve gürültüyü de güçlendiriyor; Viola-Jones bunlarda yüze benzeyen yeni kalıplar görüyor.</p>
+  <p>Hız: bizim bilgisayarımızda Viola-Jones görüntü başına yaklaşık <b>[42] ms</b>, YOLO <b>[174] ms</b>; ama CLAHE eklenince Viola-Jones'un toplam süresi yaklaşık üç katına çıkıyor.</p></div>
+
+  <h3>6 · Araştırma sorusunun cevabı</h3>
+  <div class="say"><p>Yani daha iyi görünen görüntü her zaman daha iyi tespit sağlar mı? <b>Hayır.</b></p>
+  <p>Histogram eşitleme en kontrastlı, "en iyi görünen" görüntüyü verir; ama Viola-Jones için en iyi sonuç CLAHE'deydi ve zaten iyi aydınlatılmış görüntülerde iki eşitleme de <b>zarar verdi</b>. YOLO'da ise iyileştirme <b>hiç fark yaratmadı</b>.</p>
+  <p>İyileştirmenin işe yarayıp yaramaması iki şeye bağlı: <b>dedektöre</b> (elle tasarlanmış özellikler ihtiyaç duyar, öğrenilmiş özellikler duymaz) ve <b>başlangıçtaki görüntüye</b> (karanlık ve ters ışıklı görüntüye yardım eder, iyi görüntüye zarar verir). Bu yüzden pratikte iyileştirme <b>sadece gerektiğinde</b>, örneğin görüntü karanlıksa, uygulanmalı.</p></div>
+
+  <h3>7 · Sınırlılık ve kapanış</h3>
+  <div class="say"><p>En büyük sınırlılığımız küçük veri kümesi: [15] görüntü net bir eğilim gösteriyor ama genel bir istatistiksel sonuç değil. Ön yüz modeli yana dönük yüzleri ve 24 pikselden küçük yüzleri de bulamıyor.</p>
+  <p>Teşekkür ederiz. İsterseniz seçeceğiniz bir görüntüde iki dedektörü de çalıştırabilir veya bir parametreyi değiştirip etkisini gösterebiliriz.</p></div>
+
+  <div class="box"><b>Prova notları:</b> Süre kısalırsa 4. bölümü kısaltın; 5 ve 6'yı asla kısaltmayın. Vurgulanacak üç cümle: <i>"we implemented histogram equalization ourselves"</i>, <i>"settings stayed fixed"</i>, <i>"No — it depends on the detector and the starting image."</i> Gerçek fotoğraflarla sonuçlar değişirse 5. bölümdeki yorumları (özellikle YOLO'nun F1 = 1,00 olması) yeni sonuca göre düzeltin.</div>
+</section>
+
+<!-- ============================ 3. SORULAR ============================ -->
+<section class="page">
+  <h2>3. Olası sorular ve cevaplar / Likely questions and answers</h2>
+  <p class="small">Her soruda önce Türkçe, sonra İngilizce cevap. Cevaplar kısa tutuldu; gerekirse 1. bölümdeki ayrıntılara geçin.</p>
+
+  <div class="q">
+    <div class="qt">1. Modeli siz mi eğittiniz? / Did you train the model yourselves?</div>
+    <p class="a"><span class="lang">TR</span>Hayır, ödev hazır model kullanmaya izin veriyor. Lindevs'in WIDER FACE üzerinde yüz için eğittiği YOLOv8n-face modelini kullandık: hazır YOLOv8n ağırlıklarından başlanmış, 300 epoch, batch 16, 640 piksel, RTX 4090'da 2,75 saat. Bizim işimiz modeli entegre etmek, aynı koşullarda Viola-Jones ile karşılaştırmak ve ölçmekti.</p>
+    <p class="a"><span class="lang en">EN</span>No — the assignment allows pretrained models. We used YOLOv8n-face, trained for faces on WIDER FACE by Lindevs: started from the pretrained YOLOv8n weights, 300 epochs, batch 16, 640 pixels, 2.75 hours on an RTX 4090. Our work was integrating it, comparing it with Viola-Jones under identical conditions and measuring the results.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">2. Neden YOLOv8, neden en yeni YOLO değil? / Why YOLOv8 and not the newest YOLO?</div>
+    <p class="a"><span class="lang">TR</span>Yüz için eğitilmiş bir model gerekiyordu; resmi en yeni modellerde yüz sınıfı yok. Bu model eğitim ayarları ve test sonuçları açıkça yayınlanmış, küçük ve hızlı. Araştırma sorumuz sürüm farkı değil, klasik ile derin öğrenme farkı; yeni sürümler genel testlerde birkaç puan daha iyi ama bu farkın sonucumuzu değiştirmesi beklenmez. Daha yeni bir yüz modelini denemedik.</p>
+    <p class="a"><span class="lang en">EN</span>We needed a face-trained model, and the newest official models have no face class. This one has published training settings and test scores, and it is small and fast. Our question is classical vs. deep learning, not version differences; newer versions are a few points better on general benchmarks, which should not change our conclusion. We did not test a newer face model.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">3. Neden YOLO'nun "person" sınıfını kullanmadınız? / Why not YOLO's "person" class?</div>
+    <p class="a"><span class="lang">TR</span>Ödev bunu kabul etmiyor ve yanlış olur: "person" kutusu tüm vücudu kapsar, yüz kutusuyla %50 örtüşmez; ayrıca arkası dönük kişiyi de sayar.</p>
+    <p class="a"><span class="lang en">EN</span>The assignment does not accept it, and it would be wrong: a person box covers the whole body, so it does not overlap the face box by 50%, and it also counts people facing away.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">4. Viola-Jones nasıl çalışır? / How does Viola-Jones work?</div>
+    <p class="a"><span class="lang">TR</span>Gri görüntüde, farklı boyutlarda kayan bir pencereyle yüzdeki parlaklık kalıplarını (göz bölgesi yanaktan koyu gibi) kontrol eder. Bu kalıplar "integral görüntü" sayesinde her biri 4 işlemle hesaplanır. 25 aşamalı zincirin ilk aşamaları yüz olmayan pencerelerin çoğunu hemen eler; bu yüzden hızlıdır. Birbirine yakın birden çok aday, minNeighbors ile tek yüzde birleştirilir.</p>
+    <p class="a"><span class="lang en">EN</span>On the gray image, a sliding window at many sizes checks brightness patterns of a face (e.g. eyes darker than cheeks). Thanks to the integral image each pattern costs only 4 operations. The first stages of the 25-stage chain reject most non-face windows immediately, which makes it fast. Nearby candidates are merged into one face with minNeighbors.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">5. YOLO nasıl çalışır? / How does YOLO work?</div>
+    <p class="a"><span class="lang">TR</span>Görüntü 640×640'a getirilir ve sinir ağına bir kez verilir. Ağ, görüntüyü üç farklı ölçekte ızgaralara bölüp her hücre için "burada yüz var mı, kutusu nerede, ne kadar eminim" tahmini yapar. 0,35'in altındaki tahminleri atarız; aynı yüze düşen tekrar kutuları NMS ile sileriz (en emin kutuyu tutar, onunla çok örtüşenleri siler).</p>
+    <p class="a"><span class="lang en">EN</span>The image is resized to 640×640 and passed through the network once. The network splits it into grids at three scales and, for each cell, predicts whether there is a face, where its box is, and how confident it is. We drop predictions below 0.35 and remove duplicate boxes with NMS (keep the most confident box, delete boxes that overlap it strongly).</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">6. YOLO neden ön işlemeden etkilenmedi? / Why was YOLO not affected by preprocessing?</div>
+    <p class="a"><span class="lang">TR</span>Eğitim verisinde çok sayıda karanlık ve ters ışıklı yüz var ve eğitim sırasında fotoğrafların parlaklığı zaten rastgele değiştirildi. Model ışık değişimine dayanıklı özellikler öğrenmiş; ön işleme ona yeni bilgi vermiyor, sadece süreyi uzatıyor.</p>
+    <p class="a"><span class="lang en">EN</span>Its training data contains many dark and backlit faces, and photos were randomly brightened and darkened during training. It learned lighting-robust features, so preprocessing gives it no new information; it only adds time.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">7. Viola-Jones karanlıkta neden başarısız? / Why does Viola-Jones fail in the dark?</div>
+    <p class="a"><span class="lang">TR</span>Parlaklık farklarına bakıyor; karanlıkta göz ile yanak arasındaki fark neredeyse sıfıra iniyor ve zincirin aşamaları pencereyi reddediyor. Histogram eşitleme ve CLAHE bu farkları yeniden büyüttüğü için yüzleri geri buluyor.</p>
+    <p class="a"><span class="lang en">EN</span>It looks at brightness differences; in the dark the difference between eyes and cheeks drops to almost zero and the stages reject the window. Histogram equalization and CLAHE enlarge these differences again, so the faces are found again.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">8. İyileştirme neden normal ışıkta zarar verdi? / Why did enhancement hurt in normal light?</div>
+    <p class="a"><span class="lang">TR</span>Normal görüntüde kontrast zaten yeterli. Eşitleme arka plandaki desenleri ve gürültüyü de güçlendiriyor; Viola-Jones bu yeni parlaklık kalıplarını yüz sanıp yanlış tespit üretiyor.</p>
+    <p class="a"><span class="lang en">EN</span>A normal image already has enough contrast. Equalization also strengthens background patterns and noise, and Viola-Jones mistakes these new brightness patterns for faces, producing false detections.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">9. Hangi algoritmayı kendiniz yazdınız? / Which algorithm did you implement yourselves?</div>
+    <p class="a"><span class="lang">TR</span>Histogram eşitleme: her gri seviyenin piksel sayısını sayarız (histogram), bunları kümülatif toplarız (CDF), 0–255 aralığına ölçekleriz ve her pikseli bu tabloyla yeni değerine eşleriz. Sonuç OpenCV'nin fonksiyonuyla piksel piksel aynı. Renkli görüntüde yalnız parlaklık kanalına uyguladık. Parlaklık/kontrast ayarını ve eşleştirme/ölçüm kodunu da kendimiz yazdık.</p>
+    <p class="a"><span class="lang en">EN</span>Histogram equalization: we count the pixels of each gray level (histogram), sum them cumulatively (CDF), scale to 0–255 and map every pixel through this table. The result is pixel-identical to OpenCV's function. On color images we applied it to the brightness channel only. We also wrote the brightness/contrast adjustment and the matching/metrics code ourselves.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">10. IoU 0,5 ve bire bir eşleştirme ne demek? / What do IoU 0.5 and one-to-one matching mean?</div>
+    <p class="a"><span class="lang">TR</span>IoU, iki kutunun ortak alanının toplam alanına oranı. En az 0,5 ise tahmin doğru sayılır. Her gerçek yüz yalnız bir tahminle eşleşir; aynı yüze iki kutu çizilirse biri doğru, diğeri yanlış tespit sayılır.</p>
+    <p class="a"><span class="lang en">EN</span>IoU is the overlap area of two boxes divided by their combined area. At 0.5 or more the prediction counts as correct. Each true face can match only one prediction; two boxes on the same face give one correct and one false detection.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">11. Eşikleri nasıl seçtiniz, neden sabit? / How did you choose the thresholds, and why fixed?</div>
+    <p class="a"><span class="lang">TR</span>Deneyden önce yaygın kullanılan değerleri bir kez seçtik (YOLO güven 0,35; Viola-Jones 1.1 / 5 / 24) ve tüm görüntülerde sabit tuttuk. Ödev görüntü başına ayar yapmayı yasaklıyor; aksi hâlde karşılaştırma adil olmaz. İsterseniz bir parametreyi canlı değiştirip etkisini gösterebiliriz.</p>
+    <p class="a"><span class="lang en">EN</span>We chose common values once before the experiment (YOLO confidence 0.35; Viola-Jones 1.1 / 5 / 24) and kept them fixed for all images. The assignment forbids per-image tuning; otherwise the comparison would not be fair. We can change a parameter live to show its effect.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">12. Model ne kadar doğru, zayıf yanı ne? / How accurate is the model, and what is its weakness?</div>
+    <p class="a"><span class="lang">TR</span>WIDER FACE testinde kolay yüzlerde %93,8, orta %91,8, zor %79,4 doğruluk (AP). Zayıf yanı çok küçük ve örtülü yüzler. Daha büyük sürümler (s, m, l, x) daha doğru ama daha yavaş.</p>
+    <p class="a"><span class="lang en">EN</span>On the WIDER FACE benchmark it scores 93.8% (easy), 91.8% (medium) and 79.4% (hard) AP. Its weakness is very small and occluded faces. Larger versions (s, m, l, x) are more accurate but slower.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">13. Hangi süreyi ölçtünüz? / Which time did you measure?</div>
+    <p class="a"><span class="lang">TR</span>İki süre: yalnızca modelin çalışma süresi (çıkarım) ve ön işleme dahil baştan sona süre (uçtan uca). Her ölçümden önce bir ısınma çalıştırması yaptık; ekran kartı olmadan, işlemcide ölçtük.</p>
+    <p class="a"><span class="lang en">EN</span>Two times: the model call alone (inference) and the whole process including preprocessing (end-to-end). We did one warm-up run before measuring, on the CPU without a GPU.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">14. Sonuçlar genellenebilir mi? Neyi geliştirirdiniz? / Can the results be generalized? What would you improve?</div>
+    <p class="a"><span class="lang">TR</span>Veri kümesi küçük; net bir eğilim gösteriyor ama genel bir istatistik değil. Geliştirme: daha çok fotoğraf; iyileştirmeyi yalnız görüntü karanlıksa uygulamak; CLAHE'den önce gürültü azaltmak; yana dönük yüzler için ek bir Viola-Jones modeli.</p>
+    <p class="a"><span class="lang en">EN</span>The dataset is small; it shows a clear tendency, not a general statistic. Improvements: more photos; applying enhancement only when the image is dark; noise reduction before CLAHE; an extra Viola-Jones model for side-turned faces.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">15. Yapay zekâ araçları kullandınız mı? / Did you use AI tools?</div>
+    <p class="a"><span class="lang">TR</span>Evet, kod ve dokümantasyonda bir yapay zekâ kodlama asistanından yararlandık ve bunu raporda beyan ettik. Sonuçları kontrol ettik ve her adımı açıklayabiliyoruz. (Dürüst olun: hangi kısımları kendiniz kontrol ettiğinizi/değiştirdiğinizi söyleyin.)</p>
+    <p class="a"><span class="lang en">EN</span>Yes, we used an AI coding assistant for code and documentation and disclosed it in the report. We checked the results and can explain every step. (Be honest about which parts you checked or changed yourselves.)</p>
+  </div>
+</section>
+
+<!-- ============================ 4. KAYNAKLAR ============================ -->
+<section class="page">
+  <h2>4. Kaynaklar ve linkler / Sources and links</h2>
+  <p class="small">Hoca "nereden biliyorsunuz?" diye sorarsa açılacak linkler. / Links to open if asked "where is that from?"</p>
+  <table>
+    <tr><th style="width:34%">Ne / What</th><th>Link</th></tr>
+    <tr><td>YOLOv8n-face modeli, eğitim ayarları ve sonuçları / model, training settings and results</td><td>https://github.com/lindevs/yolov8-face</td></tr>
+    <tr><td>Kullandığımız sürüm / Release used (1.0.1)</td><td>https://github.com/lindevs/yolov8-face/releases/tag/1.0.1</td></tr>
+    <tr><td>Eğitim betiği / Training script</td><td>https://github.com/lindevs/yolov8-face/blob/main/train.py</td></tr>
+    <tr><td>Eğitim kaydı / Training log (yolov8n-face)</td><td>https://github.com/lindevs/yolov8-face/blob/main/results/train/yolov8n-face/results.txt</td></tr>
+    <tr><td>WIDER FACE veri kümesi / dataset</td><td>http://shuoyang1213.me/WIDERFACE/</td></tr>
+    <tr><td>Ultralytics YOLOv8 (mimari / architecture)</td><td>https://github.com/ultralytics/ultralytics · https://docs.ultralytics.com/models/yolov8/</td></tr>
+    <tr><td>Ultralytics varsayılan eğitim ayarları / default training settings</td><td>https://docs.ultralytics.com/modes/train/#train-settings</td></tr>
+    <tr><td>Viola-Jones Haar modeli / Haar cascade</td><td>https://github.com/opencv/opencv/tree/4.x/data/haarcascades</td></tr>
+    <tr><td>Daha yeni yüz modelleri (denenmedi) / newer face models (not tested)</td><td>https://github.com/akanametov/yolo-face</td></tr>
+    <tr><td>Bizim kod / Our code</td><td>https://github.com/iskburcin/bm447-face-detection</td></tr>
+    <tr><td>Canlı demo / Live demo</td><td>https://iskburcin.github.io/bm447-face-detection/</td></tr>
+  </table>
+  <h3>Makaleler / Papers</h3>
+  <ul>
+    <li>P. Viola, M. Jones, "Rapid Object Detection using a Boosted Cascade of Simple Features," CVPR 2001.</li>
+    <li>S. Yang, P. Luo, C. C. Loy, X. Tang, "WIDER FACE: A Face Detection Benchmark," CVPR 2016.</li>
+    <li>K. Zuiderveld, "Contrast Limited Adaptive Histogram Equalization," Graphics Gems IV, 1994.</li>
+  </ul>
+  <div class="box">
+    <b>Bilinmeyen bir şey sorulursa / If asked something we don't know:</b><br>
+    <span class="lang">TR</span>"Bunu modelin sahibi yayınlamamış / biz test etmedik; kaynağı şu link, bakıp size iletebiliriz."<br>
+    <span class="lang en">EN</span>"The model's author did not publish that / we did not test it; here is the source, and we can check and get back to you."
+  </div>
+  <p class="small">Lisans notu: lindevs/yolov8-face deposunun kodu MIT lisanslı; model dosyası Ultralytics ile üretildiği için AGPL-3.0 lisans bilgisi taşıyor. Ders projesi kullanımı için sorun değil.</p>
+</section>
+
+</body>
+</html>
