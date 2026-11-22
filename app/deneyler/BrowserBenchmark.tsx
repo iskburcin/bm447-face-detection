@@ -77,9 +77,9 @@ export default function BrowserBenchmark({ python }: { python: SummaryRow[] }) {
           "The whole experiment (images × 4 preprocessing × 2 detectors) is rerun in this browser with OpenCV.js and ONNX Runtime Web and shown next to the Python results. You can also select your own dataset (images + the annotations.json exported from the Annotation tool).")}
       </p>
       <div className="row">
-        <button className="btn btn--accent" onClick={run} disabled={running}>{running ? <><span className="spin" /> {t("Çalışıyor", "Running")}</> : <><Icon name="play" size={15} /> {custom ? t("Özel veri kümesiyle çalıştır", "Run with custom dataset") : t("Demo veri kümesiyle çalıştır", "Run with demo dataset")}</>}</button>
+        <button className="btn btn--accent" onClick={run} disabled={running}>{running ? <><span className="spin" /> {t("Çalışıyor", "Running")}</> : <><Icon name="play" size={15} /> {custom ? t("Özel veri kümesiyle çalıştır", "Run with custom dataset") : t("Proje veri kümesiyle çalıştır", "Run with project dataset")}</>}</button>
         <button className="btn btn--sm" onClick={() => fileRef.current?.click()} disabled={running}><Icon name="upload" size={14} /> {t("Kendi veri kümem (çoklu seçim)", "My own dataset (multi-select)")}</button>
-        {custom && <button className="btn btn--sm" onClick={() => { setCustom(null); setMsg(""); }}>{t("Demo kümeye dön", "Back to demo set")}</button>}
+        {custom && <button className="btn btn--sm" onClick={() => { setCustom(null); setMsg(""); }}>{t("Proje veri kümesine dön", "Back to project dataset")}</button>}
         <input ref={fileRef} type="file" multiple accept="image/*,.json" hidden onChange={(e) => onFiles(e.target.files)} />
       </div>
       {(running || prog > 0) && <div className="progress"><i style={{ width: `${prog * 100}%` }} /></div>}

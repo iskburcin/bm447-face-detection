@@ -39,7 +39,6 @@ def main() -> None:
     n_face = sum(i["count"] for i in ann["images"])
     conds = list(ann["conditions"])
     cond = lambda c: COND.get(c, c)
-    synthetic = "sentetik" in ann.get("name", "").lower() or "demo" in ann.get("name", "").lower()
 
     doc = Document()
     st = doc.styles["Normal"]
@@ -71,7 +70,7 @@ def main() -> None:
     doc.add_page_break()
 
     # ---------------- Abstract ----------------
-    vj0, vjc, yo0 = S[("viola_jones", "original")], S[("viola_jones", "clahe")], S[("yolo", "original")]
+    vj0, vjc, vjh, yo0 = S[("viola_jones", "original")], S[("viola_jones", "clahe")], S[("viola_jones", "hist_eq")], S[("yolo", "original")]
     doc.add_heading("Abstract", level=1)
     doc.add_paragraph(
         f"This study examines how lighting conditions and image enhancement affect face-detection accuracy. On {n_img} images "
@@ -79,19 +78,12 @@ def main() -> None:
         f"for faces on the WIDER FACE dataset are compared on raw, brightness/contrast-adjusted, histogram-equalized and CLAHE-processed "
         f"images with fixed settings. Predictions are matched one-to-one to ground-truth boxes at IoU ≥ 0.50, and TP, FP, FN, precision, "
         f"recall, F1, absolute counting error, MAE and processing times are reported. On raw images Viola-Jones reaches F1 = {vj0['f1']:.3f} "
-        f"(recall {vj0['recall']:.2f}); with CLAHE it reaches F1 = {vjc['f1']:.3f} (recall {vjc['recall']:.2f}). However, histogram "
-        f"equalization and CLAHE produce false positives on normally lit images. YOLOv8n-face achieves F1 = {yo0['f1']:.3f} on raw images and "
-        f"stays highly accurate regardless of preprocessing. Hence an image that looks visually better does not always yield higher detection "
+        f"(recall {vj0['recall']:.2f}); with histogram equalization F1 = {vjh['f1']:.3f} and with CLAHE F1 = {vjc['f1']:.3f}. The benefit of "
+        f"enhancement is clear in low light but negative in normal light, and global histogram equalization made both detectors worse on "
+        f"backlit images. YOLOv8n-face reaches F1 = {yo0['f1']:.3f} on raw images — far better — and is only slightly affected by "
+        f"preprocessing. Hence an image that looks visually better does not always yield higher detection "
         f"accuracy; the direction of the effect depends on the detector type and on the initial condition of the image. The system is also "
         f"delivered as a Next.js web application that runs in the browser and can be deployed to Vercel, Docker and GitHub Pages.")
-    if synthetic:
-        p = doc.add_paragraph()
-        r = p.add_run("IMPORTANT: the numbers in this report belong to a SYNTHETIC DEMO dataset generated from a public-domain portrait to "
-                      "validate the pipeline. Before submission, the consented photos of the group members must be annotated and the "
-                      "experiment and this report regenerated (python run_experiments.py → python make_report_en.py).")
-        r.bold = True
-        r.font.color.rgb = RGBColor(0xC9, 0x3A, 0x12)
-
     # ---------------- 1 ----------------
     doc.add_heading("1. Objective and research question", level=1)
     doc.add_paragraph("The goal is to quantify how illumination and image-processing transformations affect face-detection accuracy, to compare "
@@ -111,14 +103,19 @@ def main() -> None:
     doc.add_paragraph(
         "Every visible face is annotated with an axis-aligned bounding box [x, y, w, h] from the forehead/hairline to the chin and between the "
         "cheeks, and the true number of people in each image is recorded. Labels are stored in dataset/annotations.json. Annotation is done "
-        "with the Annotation tool of the project's web application (/etiketleme), which shows counters for the requirement of at least 5 "
-        "images per condition and at least 15 in total.")
-    if synthetic:
-        doc.add_paragraph(
-            "The demo set was generated as follows (python/make_demo_dataset.py, seed 42): for normal light, the original portrait, a "
-            "horizontally flipped copy and 2–4 person collages; for low light, the transform s = 255·0.13·(r/255)^2.2 plus Gaussian sensor noise "
-            "with σ = 5; for backlight, a darkened subject (gain 0.17, γ = 2.0) in front of an almost saturated white background. Because the "
-            "collages paste the portrait crop at known scales, the ground-truth boxes are geometrically exact.")
+        "with the Annotation tool of the project's web application (/etiketleme).")
+    doc.add_paragraph(
+        f"The dataset consists of {n_img // 3} original photos of the group members, taken with their informed consent (dataset/originals/). "
+        "They were taken at night and in daylight, indoors and outdoors, as selfies and standing group shots; visible faces of other people in "
+        "the background were annotated as well. Each photo was orientation-corrected, resized to 1280 pixels on the long side and used in three "
+        "conditions (python/make_dataset.py, seed 42): (1) normal: the photo itself; (2) low light: s = 255·0.22·(r/255)^2.0 plus Gaussian "
+        "sensor noise with σ = 5; (3) backlight: the people inside a head-and-body mask derived from the face boxes are darkened (γ = 1.8, "
+        "gain 0.30) while the background is over-exposed with a bright glare from above. The same faces can therefore be compared across the "
+        "three conditions; the low-light and backlit versions are controlled derivations, not separate shots.")
+    doc.add_paragraph(
+        "Ground-truth boxes were drawn as follows: YOLOv8n-face with a low confidence threshold (0.10) and Viola-Jones proposed candidate "
+        "boxes, and every proposal was checked visually one by one. Only genuinely visible faces were kept; people facing away or with hidden "
+        "faces were removed, while faces cut by the image border or partly covered by a hand were kept.")
     figure(doc, FIG / "examples_normal_03.png", 16, "Figure 1. Normal-light example: two detectors × four preprocessing variants (white: ground truth, colored: prediction).")
 
     # ---------------- 3 ----------------
@@ -191,8 +188,8 @@ def main() -> None:
     table(doc, ["Condition", "Detector"] + [ENH[e] for e in ENH], rows, font=8.5)
     caption(doc, "Table 5. F1 per condition × preprocessing; TP/FP/FN in parentheses.")
     figure(doc, FIG / "heatmap_f1.png", 16.5, "Figure 5. F1 heatmap, condition × preprocessing.")
-    figure(doc, FIG / "examples_lowlight_05.png", 16.5, "Figure 6. Low-light example.")
-    figure(doc, FIG / "examples_backlight_05.png", 16.5, "Figure 7. Backlight example.")
+    figure(doc, FIG / "examples_lowlight_03.png", 16.5, "Figure 6. Low-light example.")
+    figure(doc, FIG / "examples_backlight_03.png", 16.5, "Figure 7. Backlight example.")
     doc.add_heading("5.4 Per-image results (raw and CLAHE)", level=2)
     rows = []
     for r in res["per_image"]:
@@ -218,50 +215,60 @@ def main() -> None:
     figure(doc, FIG / "histograms_lowlight.png", 16, "Figure 9. Effect of preprocessing on the histograms of a low-light image.")
     ll = lambda dk, ek: SC.get((dk, ek, "low_light"))
     nm = lambda dk, ek: SC.get((dk, ek, "normal"))
+    bl = lambda dk, ek: SC.get((dk, ek, "backlight"))
     txt = []
     if ll("viola_jones", "original"):
         txt.append(f"In low light, Viola-Jones finds {ll('viola_jones','original')['tp']}/{ll('viola_jones','original')['gt']} faces on raw images, "
                    f"{ll('viola_jones','hist_eq')['tp']} with histogram equalization and {ll('viola_jones','clahe')['tp']} with CLAHE. Haar features are "
                    "brightness differences between rectangular regions; as the image gets darker these differences approach zero and the early "
-                   "stages of the cascade reject the windows. HE/CLAHE spread the gray levels and enlarge the differences again.")
-        txt.append(f"Brightness/contrast adjustment (α = 1.3, β = 20) is insufficient in low light (TP = {ll('viola_jones','brightness_contrast')['tp']}): "
-                   "the linear transform only shifts the dark histogram slightly with a fixed stretch factor, and it also amplifies noise by α.")
+                   "stages of the cascade reject the windows. HE/CLAHE spread the gray levels and enlarge the differences again. Brightness/contrast "
+                   f"adjustment (α = 1.3, β = 20) is insufficient (TP = {ll('viola_jones','brightness_contrast')['tp']}): the linear transform only shifts "
+                   "the dark histogram slightly and also amplifies noise by α.")
+    if bl("viola_jones", "original"):
+        txt.append(f"In backlight, global histogram equalization — the version that visibly “opens up” the image most — made both detectors worse: "
+                   f"correct detections went from {bl('viola_jones','original')['tp']} to {bl('viola_jones','hist_eq')['tp']} for Viola-Jones and from "
+                   f"{bl('yolo','original')['tp']} to {bl('yolo','hist_eq')['tp']} for YOLO. The bright background dominates the global histogram, so "
+                   "equalization stretches the bright area without opening up the faces enough, and it amplifies noise. Locally operating CLAHE gave "
+                   f"the best result for both detectors (VJ {bl('viola_jones','clahe')['tp']}, YOLO {bl('yolo','clahe')['tp']} correct detections).")
     if nm("viola_jones", "clahe"):
-        txt.append(f"In normal light, by contrast, Viola-Jones has FP = {nm('viola_jones','original')['fp']} on raw images but FP = "
-                   f"{nm('viola_jones','hist_eq')['fp']} with histogram equalization and FP = {nm('viola_jones','clahe')['fp']} with CLAHE. Enhancement "
-                   "amplifies background texture (clothing, patterns, noise) and creates new face-like brightness patterns. In other words, the "
-                   "visually more “vivid”, higher-contrast image lowered the precision of the classical detector.")
+        txt.append(f"In normal light, enhancement did not help Viola-Jones: F1 was {nm('viola_jones','original')['f1']:.2f} on raw images, "
+                   f"{nm('viola_jones','hist_eq')['f1']:.2f} with histogram equalization and {nm('viola_jones','clahe')['f1']:.2f} with CLAHE "
+                   f"(correct detections {nm('viola_jones','original')['tp']} → {nm('viola_jones','clahe')['tp']} with CLAHE). On an image that already "
+                   "has enough contrast, enhancement changes the brightness pattern of the face and amplifies background texture and noise.")
     txt.append(f"YOLOv8n-face stays within F1 ≈ {min(S[('yolo', e)]['f1'] for e in ENH):.2f}–{max(S[('yolo', e)]['f1'] for e in ENH):.2f} under all "
-               "conditions and preprocessing variants. Because it was trained on a dataset with high variety in lighting, scale and pose (WIDER "
-               "FACE) and with brightness/contrast augmentation, the information provided by enhancement is already represented in its learned "
-               "features. Preprocessing only increased the processing time.")
-    txt.append("Conclusion: an image that looks visually better does not always give higher detection accuracy. Histogram equalization gives "
-               "the highest contrast (σ) to the human eye, yet the best balance for the classical detector is CLAHE, and the benefit of "
-               "enhancement appears only on images that were initially poor (low light, backlight). On well-lit images the same operation is "
-               "harmful. For the deep-learning detector preprocessing is practically irrelevant. Preprocessing should therefore be chosen per "
-               "detector and condition and, where possible, applied only when needed (e.g. by detecting the condition with a mean-brightness "
-               "threshold).")
+               "conditions and preprocessing variants; preprocessing changes its result by a few faces at most. Trained on WIDER FACE, which has "
+               "high variety in lighting, scale and pose, and with brightness augmentation, it is largely robust to lighting changes. On 1280-pixel "
+               f"images YOLO's inference time ({S[('yolo','original')]['mean_inference_ms']:.0f} ms) is shorter than Viola-Jones' "
+               f"({S[('viola_jones','original')]['mean_inference_ms']:.0f} ms); preprocessing increased the end-to-end time of both detectors.")
+    txt.append("Conclusion: an image that looks visually better does not always give higher detection accuracy. Enhancement brought a clear "
+               "benefit only on images that were dark to begin with, and only for the classical detector based on hand-designed features; it "
+               "made Viola-Jones worse in normal light, and global histogram equalization hurt both detectors in backlight. The direction of the "
+               "effect depends on the detector type, the starting condition of the image and whether the method is global or local. "
+               "Preprocessing should therefore be chosen per condition — for example, applied only when the mean brightness is low, and with "
+               "CLAHE rather than global HE.")
     for t in txt:
         doc.add_paragraph(t)
 
     doc.add_heading("7. Failure analysis", level=1)
     for b, t in [
-        ("Low light + Viola-Jones (FN): ", "When mean brightness is very low, Haar feature values fall below the cascade thresholds and all faces are missed."),
+        ("Low light + Viola-Jones (FN): ", "When mean brightness is very low, Haar feature values fall below the cascade thresholds and most faces are missed."),
         ("Backlight + Viola-Jones (FN): ", "The bright background dominates the global histogram and squeezes the face region into a narrow dark range. Global HE expands the bright area but cannot brighten the face enough; locally operating CLAHE is more successful here."),
-        ("HE/CLAHE + normal light (FP): ", "Amplified texture and noise create face-like windows. Increasing minNeighbors would reduce FP, but this was not done in the experiment because settings must stay fixed."),
+        ("Viola-Jones false positives: ", "Leaves, patterned clothing and objects on the table produce face-like brightness patterns, and HE/CLAHE amplify this texture. Increasing minNeighbors would reduce FP, but this was not done because settings must stay fixed."),
+        ("Selfies / close-ups: ", "Very close, tilted or border-cut large faces can defeat the frontal cascade; YOLO is more robust to these poses."),
         ("Small faces: ", "Haar's smallest window is 24×24 pixels, so smaller faces cannot be found in principle; YOLO can find faces down to ~10 pixels after letterboxing to 640."),
         ("Tilted/profile faces: ", "The frontalface cascade is trained only on frontal faces; its accuracy drops quickly for heads turned more than ~15°."),
     ]:
         bullet(doc, t, b)
 
     doc.add_heading("8. Limitations", level=1)
-    lims = ["The dataset is small (15 images); the results show tendencies and cannot be generalized statistically.",
+    lims = [f"The dataset is small ({n_img} images from {n_img // 3} original photos); the results show tendencies and cannot be generalized statistically.",
+            "The low-light and backlit conditions are controlled derivations of the normal photos, not separate shots; real low light also brings "
+            "motion blur, color noise and camera auto-exposure effects.",
+            "Ground-truth boxes were drawn by visually checking YOLO and Viola-Jones proposals; because the box borders follow YOLO's box style, "
+            "the IoU computation may be slightly biased in YOLO's favour.",
             "Timings were measured on a single CPU and depend on hardware. Browser timings are measured with WASM (single thread) and differ from Python.",
             "Preprocessing parameters (α, β, clipLimit) were chosen as fixed values; adaptive, image-dependent selection might perform better.",
             "Ground-truth box borders can vary by a few pixels between annotators; the IoU threshold of 0.50 tolerates this uncertainty."]
-    if synthetic:
-        lims.insert(0, "The reported numbers belong to the synthetic demo set: all faces belong to the same person and are frontal; on real group "
-                       "photos both detectors will perform worse because of pose, expression, occlusion and real sensor noise.")
     for t in lims:
         bullet(doc, t)
 
@@ -271,7 +278,7 @@ def main() -> None:
         "Next.js 16 (App Router, TypeScript). Detection runs in the browser with WebAssembly: OpenCV.js 4.10 for Viola-Jones and ONNX Runtime "
         "Web for YOLO, using the same model files. As a result the application runs statically on Vercel and GitHub Pages without server "
         "functions, face images never leave the user's device, and the Docker image is a single small Node.js service. The F1 values of the "
-        "experiment rerun in the browser are identical to the Python results. Pages: Live Detection (camera/file, preprocessing chain, both "
+        "experiment rerun in the browser agree with Python within one face (the browser decodes JPEGs slightly differently from OpenCV). Pages: Live Detection (camera/file, preprocessing chain, both "
         "detectors), Lecture Lab (formula and live before/after for each operation), Experiments, Annotation and Method; the interface has a "
         "Turkish/English language switch.")
     for t in ["npm install && npm run dev  → http://localhost:3000",

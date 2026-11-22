@@ -25,8 +25,8 @@ TR2EN = {
     "5. Değerlendirme": "5. Evaluation", "IoU ≥ 0.50 bire bir": "IoU ≥ 0.50 one-to-one", "Raporlama": "Reporting",
     "2. Baseline + 4. Kontrollü karşılaştırma: aynı veri, sabit ayarlar": "2. Baseline + 4. Controlled comparison: same data, fixed settings",
     "Sonuç: Görsel olarak daha iyi görüntü ≠ her zaman daha iyi tespit": "Result: a visually better image ≠ always better detection",
-    "VJ: HE/CLAHE düşük ışıkta recall'u artırır ama normal ışıkta FP ekler · YOLO: ön işlemeye duyarsız":
-        "VJ: HE/CLAHE raise recall in low light but add FP in normal light · YOLO: insensitive to preprocessing",
+    "VJ: HE/CLAHE karanlıkta yardım eder, normal ışıkta zarar verir · ters ışıkta global HE ikisine de zarar verir · YOLO: az etkilenir":
+        "VJ: HE/CLAHE help in the dark, hurt in normal light · global HE hurts both in backlight · YOLO: barely affected",
 }
 L = (lambda t: TR2EN.get(t, t)) if EN else (lambda t: t)
 
@@ -88,7 +88,7 @@ def main():
 
     ax.text(10.4, 1.75, L("2. Baseline + 4. Kontrollü karşılaştırma: aynı veri, sabit ayarlar"), ha="center", fontsize=8.5, color=MUT, style="italic")
     box(ax, 3.3, 0.35, 11.5, 0.9, "Sonuç: Görsel olarak daha iyi görüntü ≠ her zaman daha iyi tespit",
-        "VJ: HE/CLAHE düşük ışıkta recall'u artırır ama normal ışıkta FP ekler · YOLO: ön işlemeye duyarsız", fc="#fff6e0", ec="#c98a12")
+        "VJ: HE/CLAHE karanlıkta yardım eder, normal ışıkta zarar verir · ters ışıkta global HE ikisine de zarar verir · YOLO: az etkilenir", fc="#fff6e0", ec="#c98a12")
     OUT.parent.mkdir(exist_ok=True)
     fig.savefig(OUT, dpi=160, bbox_inches="tight", facecolor="white")
     print("->", OUT)

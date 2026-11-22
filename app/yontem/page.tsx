@@ -69,8 +69,8 @@ export default function Page() {
               <><b>Vercel / GitHub Pages:</b> serverless functions hit size and cold-start limits with Python + OpenCV + model weights. Running detection in the browser with WebAssembly makes the site fully static — no server cost or latency — which is also why it runs on GitHub Pages.</>, 1)}
             {li(<><b>Gizlilik:</b> Yüz görüntüleri kişisel veridir. Görüntü kullanıcının cihazından hiç çıkmaz — ödevdeki etik kurala doğrudan uygundur.</>,
               <><b>Privacy:</b> face images are personal data. They never leave the user&apos;s device — directly matching the assignment&apos;s ethics rules.</>, 2)}
-            {li(<><b>Tutarlılık:</b> Haar için Python&apos;daki OpenCV&apos;nin WASM derlemesi (OpenCV.js), YOLO için aynı ONNX dosyası kullanılır. Deneyler sayfasında tarayıcı ve Python F1 değerleri yan yana gösterilir.</>,
-              <><b>Consistency:</b> Haar uses the WASM build of the same OpenCV (OpenCV.js) and YOLO uses the same ONNX file as Python. The Experiments page shows browser and Python F1 side by side — they match exactly.</>, 3)}
+            {li(<><b>Tutarlılık:</b> Haar için Python&apos;daki OpenCV&apos;nin WASM derlemesi (OpenCV.js), YOLO için aynı ONNX dosyası kullanılır. Deneyler sayfasında tarayıcı ve Python F1 değerleri yan yana gösterilir; tarayıcının JPEG çözücüsü nedeniyle en fazla bir yüzlük fark oluşur.</>,
+              <><b>Consistency:</b> Haar uses the WASM build of the same OpenCV (OpenCV.js) and YOLO uses the same ONNX file as Python. The Experiments page shows browser and Python F1 side by side — they agree, with at most one face difference caused by the browser&apos;s JPEG decoder.</>, 3)}
             {li(<><b>Docker:</b> Aynı Next.js uygulaması <code>output: &quot;standalone&quot;</code> ile küçük bir Node imajına paketlenir; ayrı bir Python servisine gerek kalmaz.</>,
               <><b>Docker:</b> the same Next.js app is packaged into a small Node image with <code>output: &quot;standalone&quot;</code>; no separate Python service is needed.</>, 4)}
           </ul>
@@ -85,7 +85,7 @@ export default function Page() {
             <tr><td>YOLO</td><td>640×640 letterbox, conf 0.35, NMS IoU 0.45</td></tr>
             <tr><td><T tr="Eşleştirme" en="Matching" /></td><td><T tr="IoU ≥ 0.50, açgözlü bire bir" en="IoU ≥ 0.50, greedy one-to-one" /></td></tr>
             <tr><td><T tr="Süre" en="Timing" /></td><td><T tr="çıkarım (yalnız model çağrısı) ve uçtan uca (ön işleme + model + son işleme), ısınma sonrası, CPU" en="inference (model call only) and end-to-end (preprocessing + model + post-processing), after warm-up, CPU" /></td></tr>
-            <tr><td><T tr="Rastgelelik" en="Randomness" /></td><td><T tr="demo veri üretimi tohumu 42; dedektörler deterministik" en="demo data seed 42; detectors are deterministic" /></td></tr>
+            <tr><td><T tr="Rastgelelik" en="Randomness" /></td><td><T tr="koşul türetme tohumu 42; dedektörler deterministik" en="condition-derivation seed 42; detectors are deterministic" /></td></tr>
           </tbody></table></div>
           <p className="small"><T
             tr={<>Eşikler görüntü başına <b>değiştirilmez</b>. Canlı Tespit sayfasındaki parametre kaydırıcıları yalnız savunmada “bir parametreyi değiştir” isteği için vardır.</>}
@@ -112,7 +112,7 @@ export default function Page() {
           <ul className="small" style={{ paddingLeft: 18, display: "grid", gap: 6 }}>
             {li("Fotoğraflar yalnız grup üyelerinin bilgilendirilmiş onayıyla çekilir; reşit olmayan kimse yer almaz.", "Photos are taken only with the informed consent of group members; no minors are included.", 1)}
             {li(<>Sistem yalnız yüz <b>tespiti</b> ve sayma yapar; yüz tanıma, kimlik etiketleme veya yüz eşleştirme yoktur.</>, <>The system only performs face <b>detection</b> and counting; no face recognition, identity labelling or face matching.</>, 2)}
-            {li("Kimliği belirlenebilir grup fotoğrafları açık izin olmadan yayımlanmaz; herkese açık sürümde yalnız sentetik demo kümesi bulunur.", "Identifiable group photos are not published without explicit permission; the public version contains only the synthetic demo set.", 3)}
+            {li("Kimliği belirlenebilir grup fotoğrafları yalnızca fotoğraftaki grup üyelerinin açık izniyle kullanılır ve yayımlanır.", "Identifiable group photos are used and published only with the explicit permission of the group members shown.", 3)}
             {li("Web uygulaması görüntüleri sunucuya göndermez, saklamaz, çerez/analitik kullanmaz.", "The web app never uploads or stores images and uses no cookies or analytics.", 4)}
           </ul>
         </div>

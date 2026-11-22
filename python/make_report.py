@@ -94,7 +94,6 @@ def main() -> None:
     n_img = len(ann["images"])
     n_face = sum(i["count"] for i in ann["images"])
     conds = list(ann["conditions"])
-    synthetic = "sentetik" in ann.get("name", "").lower() or "demo" in ann.get("name", "").lower()
 
     doc = Document()
     st = doc.styles["Normal"]
@@ -134,19 +133,13 @@ def main() -> None:
         f"yüz için eğitilmiş YOLOv8n-face modeli; ham, parlaklık/kontrast ayarlı, histogram eşitlenmiş ve CLAHE uygulanmış görüntülerde, "
         f"sabit ayarlarla karşılaştırılmıştır. Tahminler referans kutularla IoU ≥ 0,50 koşulunda bire bir eşleştirilmiş; TP, FP, FN, "
         f"precision, recall, F1, mutlak sayma hatası, MAE ve işlem süreleri raporlanmıştır. Ham görüntülerde Viola-Jones F1 = {vj0['f1']:.3f} "
-        f"(recall {vj0['recall']:.2f}) iken CLAHE ile F1 = {vjc['f1']:.3f} (recall {vjc['recall']:.2f}) olmuştur; buna karşın histogram "
-        f"eşitleme ve CLAHE normal ışıklı görüntülerde yanlış pozitif üretmiştir. YOLOv8n-face ham görüntülerde F1 = {yo0['f1']:.3f} ile "
-        f"ön işlemeden bağımsız yüksek başarı göstermiştir. Sonuç olarak görsel olarak daha iyi görünen bir görüntü her zaman daha yüksek "
+        f"(recall {vj0['recall']:.2f}) iken histogram eşitleme ile F1 = {vjh['f1']:.3f}, CLAHE ile F1 = {vjc['f1']:.3f} olmuştur; iyileştirmenin "
+        f"faydası düşük ışıkta belirgin, normal ışıkta ise olumsuzdur ve global histogram eşitleme ters ışıkta her iki dedektörü de "
+        f"kötüleştirmiştir. YOLOv8n-face ham görüntülerde F1 = {yo0['f1']:.3f} ile çok daha başarılı olmuş ve ön işlemeden yalnızca küçük "
+        f"ölçüde etkilenmiştir. Sonuç olarak görsel olarak daha iyi görünen bir görüntü her zaman daha yüksek "
         f"tespit başarısı sağlamamaktadır; etkinin yönü dedektörün türüne ve görüntünün başlangıç koşuluna bağlıdır. Ayrıca sistem, "
         f"tarayıcıda çalışan, Vercel'e ve Docker'a dağıtılabilen bir Next.js web uygulaması olarak sunulmuştur."
     )
-    if synthetic:
-        p = doc.add_paragraph()
-        r = p.add_run("ÖNEMLİ NOT: Bu rapordaki sayılar, hattın doğrulanması için kamu malı bir portreden üretilmiş SENTETİK DEMO veri "
-                      "kümesine aittir. Teslimden önce grup üyelerinin onaylı fotoğrafları etiketlenip deney ve bu rapor yeniden "
-                      "üretilmelidir (python run_experiments.py → python make_report.py).")
-        r.bold = True
-        r.font.color.rgb = RGBColor(0xC9, 0x3A, 0x12)
 
     # ---------------- 1. Amaç ----------------
     doc.add_heading("1. Amaç ve araştırma sorusu", level=1)
@@ -168,14 +161,20 @@ def main() -> None:
     doc.add_paragraph(
         "Her görünen yüz, alından/saç çizgisinden çeneye ve iki yanak arasında kalacak şekilde eksen hizalı bir sınırlayıcı kutu "
         "[x, y, w, h] ile işaretlenmiş ve görüntüdeki gerçek kişi sayısı kaydedilmiştir. Etiketler dataset/annotations.json dosyasında "
-        "tutulur. Etiketleme için projenin web uygulamasındaki Etiketleme aracı (/etiketleme) kullanılır; araç her koşul için en az 5, "
-        "toplamda en az 15 görüntü şartını sayaçla gösterir.")
-    if synthetic:
-        doc.add_paragraph(
-            "Demo kümesi şöyle üretilmiştir (python/make_demo_dataset.py, tohum 42): normal ışık için orijinal portre, yatay çevrilmiş "
-            "ve 2–4 kişilik kolajlar; düşük ışık için s = 255·0,13·(r/255)^2,2 dönüşümü ve σ = 5 Gauss sensör gürültüsü; ters ışık için "
-            "kararmış özne (0,17 kazanç, γ = 2,0) ve neredeyse beyaza doymuş arka plan. Kolajlar portre kırpıntısının bilinen ölçeklerle "
-            "yapıştırılmasıyla kurulduğundan referans kutular geometrik olarak kesindir.")
+        "tutulur.")
+    doc.add_paragraph(
+        f"Veri kümesi grup üyelerinin bilgilendirilmiş onayıyla çekilmiş {n_img // 3} özgün fotoğraftan oluşur (dataset/originals/). "
+        "Fotoğraflar gece ve gündüz, iç ve dış mekânda, selfie ve ayakta grup pozlarında çekilmiştir; arka planda görünen başka kişilerin "
+        "yüzleri de etiketlenmiştir. Her fotoğraf yönü düzeltilip uzun kenarı 1280 piksel olacak şekilde küçültülmüş ve üç koşulda "
+        "kullanılmıştır (python/make_dataset.py, tohum 42): (1) normal: fotoğrafın kendisi; (2) düşük ışık: s = 255·0,22·(r/255)^2,0 "
+        "dönüşümü ve σ = 5 Gauss sensör gürültüsü; (3) ters ışık: yüz kutularından türetilen baş-gövde maskesi içindeki kişiler "
+        "karartılır (γ = 1,8, kazanç 0,30), arka plan aşırı pozlanır ve üstten parlama eklenir. Böylece aynı yüzler üç koşulda "
+        "karşılaştırılabilir; düşük ışık ve ters ışık sürümleri ayrı çekimler değil, kontrollü olarak türetilmiş görüntülerdir.")
+    doc.add_paragraph(
+        "Referans kutular şu yolla çizilmiştir: YOLOv8n-face düşük güven eşiğiyle (0,10) ve Viola-Jones aday kutular önermiş, her öneri "
+        "görsel olarak tek tek kontrol edilmiştir. Yalnızca gerçekten görünen yüzler tutulmuş; arkası dönük veya yüzü görünmeyen "
+        "kişiler çıkarılmış, kenarda kesilen ya da elle kısmen örtülen yüzler tutulmuştur. Etiketler web uygulamasındaki Etiketleme "
+        "aracıyla (/etiketleme) gözden geçirilebilir.")
     figure(doc, FIG / "examples_normal_03.png", 16, "Şekil 1. Normal ışık örneği: iki dedektör × dört ön işleme (beyaz: referans, renkli: tahmin).")
 
     # ---------------- 3. Yöntem ----------------
@@ -248,8 +247,8 @@ def main() -> None:
     table(doc, ["Koşul", "Dedektör"] + [ENH[e] for e in ENH], rows, font=8.5)
     caption(doc, "Tablo 5. Koşul × ön işleme F1 değerleri; parantez içinde TP/FP/FN.")
     figure(doc, FIG / "heatmap_f1.png", 16.5, "Şekil 5. Koşul × ön işleme F1 ısı haritası.")
-    figure(doc, FIG / "examples_lowlight_05.png", 16.5, "Şekil 6. Düşük ışık örneği.")
-    figure(doc, FIG / "examples_backlight_05.png", 16.5, "Şekil 7. Ters ışık örneği.")
+    figure(doc, FIG / "examples_lowlight_03.png", 16.5, "Şekil 6. Düşük ışık örneği.")
+    figure(doc, FIG / "examples_backlight_03.png", 16.5, "Şekil 7. Ters ışık örneği.")
     doc.add_heading("5.4 Görüntü bazında sonuçlar (ham ve CLAHE)", level=2)
     rows = []
     for r in res["per_image"]:
@@ -275,49 +274,59 @@ def main() -> None:
     figure(doc, FIG / "histograms_lowlight.png", 16, "Şekil 9. Düşük ışık görüntüsünde ön işlemlerin histogramlara etkisi.")
     ll = lambda dk, ek: SC[(dk, ek, "low_light")] if (dk, ek, "low_light") in SC else None
     nm = lambda dk, ek: SC[(dk, ek, "normal")] if (dk, ek, "normal") in SC else None
+    bl = lambda dk, ek: SC[(dk, ek, "backlight")] if (dk, ek, "backlight") in SC else None
     txt = []
     if ll("viola_jones", "original"):
-        txt.append(f"Düşük ışıkta Viola-Jones ham görüntüde {ll('viola_jones','original')['tp']}/{ll('viola_jones','original')['gt']} yüz bulurken, "
+        txt.append(f"Düşük ışıkta Viola-Jones ham görüntüde {ll('viola_jones','original')['tp']}/{ll('viola_jones','original')['gt']} yüz bulurken "
                    f"histogram eşitleme ile {ll('viola_jones','hist_eq')['tp']}, CLAHE ile {ll('viola_jones','clahe')['tp']} yüz bulmuştur. Haar özellikleri "
                    "dikdörtgen bölgeler arasındaki parlaklık farklarıdır; görüntü karardıkça bu farklar sıfıra yaklaşır ve kaskadın erken aşamaları "
-                   "pencereleri reddeder. HE/CLAHE gri seviyeleri yaydığı için farkları yeniden büyütür.")
-        txt.append(f"Parlaklık/kontrast ayarı (α=1,3, β=20) düşük ışıkta yetersiz kalmıştır (TP = {ll('viola_jones','brightness_contrast')['tp']}): "
-                   "doğrusal dönüşüm karanlık histogramı yalnızca biraz kaydırır ve germe oranı sabittir; aynı zamanda gürültüyü de α kadar büyütür.")
+                   "pencereleri reddeder. HE/CLAHE gri seviyeleri yaydığı için farkları yeniden büyütür. Parlaklık/kontrast ayarı (α=1,3, β=20) ise "
+                   f"yetersiz kalmıştır (TP = {ll('viola_jones','brightness_contrast')['tp']}): doğrusal dönüşüm karanlık histogramı yalnızca biraz "
+                   "kaydırır ve gürültüyü de α kadar büyütür.")
+    if bl("viola_jones", "original"):
+        txt.append(f"Ters ışıkta görüntüyü gözle en çok “açan” global histogram eşitleme, iki dedektörü de kötüleştirmiştir: doğru tespit "
+                   f"sayısı Viola-Jones'ta {bl('viola_jones','original')['tp']} → {bl('viola_jones','hist_eq')['tp']}, YOLO'da "
+                   f"{bl('yolo','original')['tp']} → {bl('yolo','hist_eq')['tp']} olmuştur. Parlak arka plan global histogramı domine ettiği için "
+                   "eşitleme parlak alanı genişletirken yüz bölgesini yeterince açamaz ve gürültüyü büyütür. Yerel çalışan CLAHE ise iki dedektörde de "
+                   f"en iyi sonucu vermiştir (VJ {bl('viola_jones','clahe')['tp']}, YOLO {bl('yolo','clahe')['tp']} doğru tespit).")
     if nm("viola_jones", "clahe"):
-        txt.append(f"Normal ışıkta ise Viola-Jones ham görüntüde FP = {nm('viola_jones','original')['fp']} iken histogram eşitlemede "
-                   f"FP = {nm('viola_jones','hist_eq')['fp']}, CLAHE'de FP = {nm('viola_jones','clahe')['fp']} olmuştur. İyileştirme arka plandaki "
-                   "dokuyu (giysi, desen, gürültü) güçlendirerek yüze benzeyen yeni parlaklık örüntüleri oluşturur. Yani görsel olarak daha "
-                   "“canlı” ve kontrastlı görüntü, klasik dedektörde precision'ı düşürmüştür.")
-    txt.append(f"YOLOv8n-face tüm koşul ve ön işlemelerde F1 ≈ {min(S[('yolo', e)]['f1'] for e in ENH):.2f}–{max(S[('yolo', e)]['f1'] for e in ENH):.2f} aralığında kalmıştır. "
-               "Model WIDER FACE gibi aydınlatma, ölçek ve poz çeşitliliği yüksek bir veri kümesiyle ve parlaklık/kontrast veri artırmasıyla "
-               "eğitildiğinden, iyileştirmenin sağladığı bilgi zaten öğrenilmiş öznitelikler içinde temsil edilmektedir. Ön işleme yalnızca "
-               "işlem süresini artırmıştır.")
-    txt.append("Sonuç: Görsel olarak daha iyi görünen görüntü her zaman daha yüksek tespit başarısı sağlamaz. Histogram eşitleme insan gözüne "
-               "en yüksek kontrastı (σ) verir; ancak klasik dedektör için en iyi denge CLAHE'dedir ve iyileştirmenin faydası yalnızca "
-               "başlangıçta kötü olan görüntülerde (düşük ışık, ters ışık) ortaya çıkar. İyi aydınlatılmış görüntülerde aynı işlem zarar verir. "
-               "Derin öğrenme tabanlı dedektör için ise ön işleme neredeyse etkisizdir. Bu nedenle ön işleme dedektöre ve koşula göre "
-               "seçilmeli; mümkünse koşul tespit edilerek (ör. ortalama parlaklık eşiği) yalnızca gerektiğinde uygulanmalıdır.")
+        txt.append(f"Normal ışıkta iyileştirme Viola-Jones'a yardım etmemiştir: F1 ham görüntüde {nm('viola_jones','original')['f1']:.2f} iken "
+                   f"histogram eşitlemede {nm('viola_jones','hist_eq')['f1']:.2f}, CLAHE'de {nm('viola_jones','clahe')['f1']:.2f} olmuştur "
+                   f"(CLAHE ile doğru tespit {nm('viola_jones','original')['tp']} → {nm('viola_jones','clahe')['tp']}). Kontrastı zaten yeterli bir "
+                   "görüntüde iyileştirme yüzün parlaklık örüntüsünü değiştirir ve arka plandaki doku ile gürültüyü güçlendirir.")
+    txt.append(f"YOLOv8n-face tüm koşul ve ön işlemelerde F1 ≈ {min(S[('yolo', e)]['f1'] for e in ENH):.2f}–{max(S[('yolo', e)]['f1'] for e in ENH):.2f} "
+               "aralığında kalmıştır; ön işlemenin etkisi en fazla birkaç yüzdür. Model WIDER FACE gibi aydınlatma, ölçek ve poz çeşitliliği yüksek "
+               "bir veri kümesiyle ve parlaklık veri artırmasıyla eğitildiğinden ışık değişimine büyük ölçüde dayanıklıdır. 1280 piksellik "
+               f"görüntülerde YOLO'nun çıkarım süresi ({S[('yolo','original')]['mean_inference_ms']:.0f} ms) Viola-Jones'unkinden "
+               f"({S[('viola_jones','original')]['mean_inference_ms']:.0f} ms) kısadır; ön işleme ise iki dedektörde de uçtan uca süreyi artırmıştır.")
+    txt.append("Sonuç: Görsel olarak daha iyi görünen görüntü her zaman daha yüksek tespit başarısı sağlamaz. İyileştirme yalnızca başlangıçta "
+               "karanlık olan görüntülerde ve el yapımı özelliklere dayanan klasik dedektörde belirgin fayda sağlamış; normal ışıkta Viola-Jones'u "
+               "kötüleştirmiş, ters ışıkta global histogram eşitleme her iki dedektöre de zarar vermiştir. Etkinin yönü dedektörün türüne, "
+               "görüntünün başlangıç koşuluna ve yöntemin global mi yerel mi olduğuna bağlıdır. Bu nedenle ön işleme koşula göre seçilmeli; "
+               "örneğin yalnızca ortalama parlaklık düşükken ve global HE yerine CLAHE ile uygulanmalıdır.")
     for t in txt:
         doc.add_paragraph(t)
 
     doc.add_heading("7. Başarısızlık analizi", level=1)
     for b, t in [
-        ("Düşük ışık + Viola-Jones (FN): ", "Ortalama parlaklığın çok düşük olduğu görüntülerde Haar özellik değerleri kaskad eşiklerinin altında kalır; tüm yüzler kaçırılır."),
+        ("Düşük ışık + Viola-Jones (FN): ", "Ortalama parlaklığın çok düşük olduğu görüntülerde Haar özellik değerleri kaskad eşiklerinin altında kalır; yüzlerin büyük çoğunluğu kaçırılır."),
         ("Ters ışık + Viola-Jones (FN): ", "Parlak arka plan global histogramı domine eder; yüz bölgesi dar bir koyu gri aralığa sıkışır. Global HE parlak alanı genişletirken yüzü yeterince açamaz; yerel çalışan CLAHE bu durumda daha başarılıdır."),
-        ("HE/CLAHE + normal ışık (FP): ", "Güçlendirilmiş doku ve gürültü yüze benzeyen pencereler üretir. minNeighbors artırılarak FP azaltılabilir ama bu, sabit ayar kuralı gereği deneyde yapılmamıştır."),
+        ("Viola-Jones yanlış pozitifleri: ", "Yapraklar, desenli giysiler ve masa üzerindeki nesneler yüze benzeyen parlaklık örüntüleri üretir; HE/CLAHE bu dokuyu güçlendirir. minNeighbors artırılarak FP azaltılabilir ama bu, sabit ayar kuralı gereği deneyde yapılmamıştır."),
+        ("Selfie / yakın çekim: ", "Kameraya çok yakın, eğik veya kenarda kesilen büyük yüzlerde Viola-Jones'un ön yüz kaskadı başarısız olabilir; YOLO bu pozlara daha dayanıklıdır."),
         ("Küçük yüzler: ", "Haar'ın en küçük penceresi 24×24 piksel olduğundan daha küçük yüzler prensip olarak bulunamaz; YOLO 640'a letterbox sonrası ~10 piksele kadar yüzleri bulabilir."),
         ("Eğik/profil yüzler: ", "frontalface kaskadı yalnız önden yüzler için eğitilmiştir; ~15°'den fazla dönük başlarda başarısı hızla düşer."),
     ]:
         bullet(doc, t, b)
 
     doc.add_heading("8. Sınırlılıklar", level=1)
-    lims = ["Veri kümesi küçüktür (15 görüntü); sonuçlar istatistiksel olarak genellenemez, eğilim gösterir.",
+    lims = [f"Veri kümesi küçüktür ({n_img} görüntü, {n_img // 3} özgün fotoğraf); sonuçlar istatistiksel olarak genellenemez, eğilim gösterir.",
+            "Düşük ışık ve ters ışık koşulları ayrı çekimler değil, normal fotoğraflardan kontrollü olarak türetilmiştir; gerçek düşük ışıkta "
+            "hareket bulanıklığı, renk gürültüsü ve kamera otomatik pozlaması gibi ek etkiler olur.",
+            "Referans kutular YOLO ve Viola-Jones önerileri elle kontrol edilerek çizilmiştir; kutu sınırları YOLO'nun kutu tarzına yakın "
+            "olduğundan IoU hesabı YOLO lehine hafif bir yanlılık taşıyabilir.",
             "Süre ölçümleri tek bir CPU'da yapılmıştır; donanıma göre değişir. Tarayıcıdaki süreler WASM (tek iş parçacığı) ile ölçülür ve Python'dan farklıdır.",
             "Ön işleme parametreleri (α, β, clipLimit) sabit seçilmiştir; görüntüye uyarlanmış (adaptif) seçim daha iyi sonuç verebilir.",
             "Referans kutuların sınırları etiketleyiciye göre birkaç piksel değişebilir; IoU 0,50 eşiği bu belirsizliği tolere eder."]
-    if synthetic:
-        lims.insert(0, "Raporlanan sayılar sentetik demo kümesine aittir: tüm yüzler aynı kişiye ait ve önden çekilmiştir; gerçek grup fotoğraflarında "
-                       "poz, ifade, örtülme ve gerçek sensör gürültüsü nedeniyle her iki dedektörün başarısı daha düşük olacaktır.")
     for t in lims:
         bullet(doc, t)
 
@@ -327,7 +336,7 @@ def main() -> None:
         "uygulaması geliştirilmiştir. Tespit tarayıcıda WebAssembly ile yapılır: Viola-Jones için OpenCV.js 4.10, YOLO için ONNX Runtime Web "
         "ve aynı model dosyaları kullanılır. Bu sayede uygulama Vercel'de sunucu fonksiyonu gerektirmeden statik olarak çalışır, yüz "
         "görüntüleri kullanıcının cihazından çıkmaz ve Docker imajı tek bir küçük Node.js servisinden oluşur. Tarayıcıda yeniden çalıştırılan "
-        "deneyin F1 değerleri Python sonuçlarıyla aynıdır. Uygulamanın sayfaları: Canlı Tespit (kamera/dosya, ön işleme zinciri, iki dedektör), "
+        "deneyin F1 değerleri Python sonuçlarıyla en fazla bir yüzlük farkla örtüşür (tarayıcının JPEG çözücüsü OpenCV'den biraz farklıdır). Uygulamanın sayfaları: Canlı Tespit (kamera/dosya, ön işleme zinciri, iki dedektör), "
         "Ders Laboratuvarı (her işlemin formülü ve canlı önce/sonra gösterimi), Deneyler, Etiketleme ve Yöntem.")
     for t in ["npm install && npm run dev  → http://localhost:3000",
               "docker compose up --build  → http://localhost:3000",

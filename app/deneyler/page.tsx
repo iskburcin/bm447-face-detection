@@ -70,8 +70,8 @@ export default function Page() {
 
       <div className="note note--warn" style={{ marginBottom: 16 }}>
         <T
-          tr={<><b>Not:</b> Şu anki veri kümesi, hattı test etmek için kamu malı NASA portresinden üretilmiş <b>sentetik demo</b> kümesidir. Teslimde grup üyelerinin onaylı fotoğrafları ve Etiketleme aracıyla çizilen kutularla değiştirilip deney yeniden çalıştırılmalıdır.</>}
-          en={<><b>Note:</b> the current dataset is a <b>synthetic demo</b> set generated from a public-domain NASA portrait to test the pipeline. For the submission it is replaced by consented photos of the group members, annotated with the Annotation tool, and the experiment is rerun.</>}
+          tr={<><b>Veri kümesi:</b> grup üyelerinin onaylı {nImg / 3} fotoğrafı; her biri normal, <b>düşük ışık</b> ve <b>ters ışık</b> olmak üzere 3 koşulda. Düşük ışık ve ters ışık sürümleri ayrı çekimler değil, aynı fotoğraftan kontrollü olarak türetildi (gama, kazanç, gürültü / kişi maskesi + aşırı pozlanmış arka plan); böylece aynı yüzler üç koşulda karşılaştırılabiliyor.</>}
+          en={<><b>Dataset:</b> {nImg / 3} consented photos of the group members, each in 3 conditions: normal, <b>low light</b> and <b>backlight</b>. The low-light and backlit versions are not separate shots but controlled derivations of the same photo (gamma, gain, noise / person mask + over-exposed background), so the same faces can be compared across the three conditions.</>}
         />
       </div>
 
@@ -95,8 +95,8 @@ export default function Page() {
         <div className="card stack">
           <p style={{ color: "var(--text)" }}>
             <T
-              tr="Aşağıdaki tablo her ön işlemin görüntü istatistiğini (ortalama parlaklık μ, kontrast σ, entropi H) gösterir. HE en yüksek σ'yı üretir ve görüntüyü insan gözüne “en net” gösterir; ancak Viola-Jones için en iyi sonuç CLAHE'dedir ve normal ışıkta HE/CLAHE yanlış pozitif ekler. YOLO'nun F1'i ise ön işlemeden bağımsız kalır."
-              en="The table shows the image statistics of each preprocessing variant (mean brightness μ, contrast σ, entropy H). HE produces the highest σ and looks “sharpest” to the human eye, yet the best Viola-Jones result comes from CLAHE, and on normally lit images HE/CLAHE add false positives. YOLO's F1 stays independent of preprocessing."
+              tr="Aşağıdaki tablo her ön işlemin görüntü istatistiğini (ortalama parlaklık μ, kontrast σ, entropi H) ve F1'i gösterir. Düşük ışıkta HE/CLAHE görüntüyü açıp Viola-Jones'un bulduğu yüz sayısını belirgin biçimde artırıyor. Ama normal ışıkta aynı işlemler Viola-Jones'u kötüleştiriyor; ters ışıkta görüntüyü gözle en çok açan global HE ise iki dedektörün de F1'ini düşürüyor, yerel çalışan CLAHE ikisini de iyileştiriyor. YOLO'nun F1'i tüm koşullarda dar bir aralıkta kalıyor."
+              en="The table shows each variant's image statistics (mean brightness μ, contrast σ, entropy H) next to F1. In low light HE/CLAHE brighten the image and clearly increase the faces Viola-Jones finds. But in normal light the same operations make Viola-Jones worse, and in backlight global HE — which visibly opens up the image most — lowers F1 for both detectors, while locally operating CLAHE improves both. YOLO's F1 stays within a narrow range in every condition."
             />
           </p>
           <div className="table-wrap"><table>
@@ -116,7 +116,7 @@ export default function Page() {
 
       <div className="section-title"><span className="num">4</span><h2><T tr="Örnek çıktılar" en="Example outputs" /></h2></div>
       <div className="stack">
-        {["examples_normal_03.png", "examples_lowlight_05.png", "examples_backlight_05.png"].map((f) => (
+        {["examples_normal_03.png", "examples_lowlight_03.png", "examples_backlight_03.png"].map((f) => (
           <div key={f} className="card"><img src={`${BASE}/results/figures/${f}`} alt={f} /></div>
         ))}
       </div>

@@ -17,12 +17,15 @@ F1, per-image count error, MAE and timing.
 * **Web app** (Next.js 16, TypeScript): everything runs **in the browser** via WebAssembly — OpenCV.js for Haar,
   ONNX Runtime Web for YOLO — so images never leave the device. Pages: Live Detection (file/camera, step-by-step
   preprocessing with histograms, both models compared), Lecture Lab (11 interactive lessons from pixel matrices to
-  NMS and IoU), Experiments (all tables and figures, plus a full in-browser rerun that reproduces the Python F1
-  values exactly), Annotation tool and Method.
+  NMS and IoU), Experiments (all tables and figures, plus a full in-browser rerun whose F1 matches Python in 6 of 8
+  configurations and differs by one face in the other two), Annotation tool and Method.
 * **Python pipeline** (`python/`): dataset generation, experiments, figures and the Word report.
 * **Deploy:** Vercel, Docker (`docker compose up --build`) or GitHub Pages (`npm run build:pages`).
-* **Key finding:** an image that *looks* better does not always detect better — HE/CLAHE rescue Viola-Jones in the
-  dark but add false positives in good light, while YOLO is almost unaffected by preprocessing.
+* **Data:** 6 consented photos of the group × 3 conditions (normal, derived low light, derived backlight) = 18 images, 72 faces.
+* **Key finding:** an image that *looks* better does not always detect better. YOLO is far ahead (F1 0.93 vs 0.50 raw)
+  and changes by only a face or two with preprocessing. Histogram equalization lifts Viola-Jones in the dark
+  (4 → 14 of 24 faces), but enhancement makes it worse in normal light, and in backlight global HE hurts both detectors
+  while local CLAHE helps both.
 * Presentation guide in English: [`docs/Defense_Guide_EN.md`](docs/Defense_Guide_EN.md).
 * English report (Word): [`docs/BM447_Face_Detection_Report_EN.docx`](docs/BM447_Face_Detection_Report_EN.docx) — regenerate with `python make_report_en.py` (also redraws the English figures in `results/figures_en/`).
 
@@ -54,7 +57,7 @@ F1, per-image count error, MAE and timing.
 
 | Ödev adımı | Karşılığı |
 |---|---|
-| 1 — Görüntü toplama ve etiketleme | `dataset/` (15 görüntü: 5 normal, 5 düşük ışık, 5 ters ışık) + web **Etiketleme** aracı (`/etiketleme`) → `annotations.json` |
+| 1 — Görüntü toplama ve etiketleme | `dataset/originals/` (grup üyelerinin onaylı 6 fotoğrafı + `faces_1280.json` referans kutuları) → `python/make_dataset.py` → `dataset/images/` (18 görüntü: 6 normal, 6 düşük ışık, 6 ters ışık; 72 yüz) + `annotations.json`; kutular web **Etiketleme** aracıyla (`/etiketleme`) gözden geçirilebilir |
 | 2 — Ham görüntüde başlangıç sonuçları | `python/run_experiments.py` → kutular, sayılar, parametreler, görüntü başına süre (`results/per_image.csv`) |
 | 3 — Görüntü iyileştirme | Parlaklık/kontrast (**elle**), Histogram eşitleme (**elle**, hazır fonksiyon yok), CLAHE (OpenCV) — `python/fd/enhance.py`, `lib/imgproc.ts` |
 | 4 — Kontrollü karşılaştırma | 2 dedektör × 4 ön işleme, aynı veri ve sabit ayarlar — `results/summary*.csv` |
@@ -83,7 +86,7 @@ face-detection-project/
 ├── results/                  results.json, *.csv, figures/*.png (Python çıktısı)
 ├── python/
 │   ├── fd/                   enhance.py, detectors.py, metrics.py
-│   ├── make_demo_dataset.py  sentetik demo veri kümesi
+│   ├── make_dataset.py       grup fotoğraflarından 3 koşullu veri kümesi
 │   ├── run_experiments.py    tüm deney + tablolar + şekiller
 │   ├── make_flowchart.py     akış şeması PNG
 │   ├── make_report.py        Word raporu (.docx)
@@ -141,7 +144,7 @@ Diğer betikler:
 
 | Betik | Ne yapar |
 |---|---|
-| `make_demo_dataset.py` | Kamu malı NASA portresinden sentetik 15 görüntülük demo küme + kesin referans kutular üretir (tohum 42) |
+| `make_dataset.py` | `dataset/originals/` altındaki grup fotoğraflarından normal, düşük ışık (gama + kazanç + gürültü) ve ters ışık (kişi maskesi + aşırı pozlanmış arka plan) sürümlerini ve `annotations.json`'ı üretir (tohum 42) |
 | `make_flowchart.py` | `docs/akis_semasi.png` akış şemasını üretir |
 | `make_report.py` | `results/` verilerinden Word raporunu (`docs/BM447_Yuz_Tespiti_Raporu.docx`) üretir |
 | `make_report_en.py` | İngilizce Word raporu (`docs/BM447_Face_Detection_Report_EN.docx`); önce `make_figures_en.py` ile grafiklerin İngilizce sürümlerini `results/figures_en/` altına çizer |
@@ -170,7 +173,7 @@ Proje kökü doğrudan bir Next.js projesidir; ek ayar gerekmez.
 npx vercel --prod
 ```
 
-Notlar: Vercel'deki çıktı statik sayfalar + statik varlıklardan oluşur (sunucu fonksiyonu yok). `output: "standalone"` Vercel'de zararsızdır (Vercel kendi çıktısını kullanır). Kamera için site HTTPS üzerinden açılmalıdır (Vercel varsayılanı). Kimliği belirlenebilir grup fotoğraflarını **herkese açık** Vercel sürümüne koymayın; demo kümesiyle yayımlayın.
+Notlar: Vercel'deki çıktı statik sayfalar + statik varlıklardan oluşur (sunucu fonksiyonu yok). `output: "standalone"` Vercel'de zararsızdır (Vercel kendi çıktısını kullanır). Kamera için site HTTPS üzerinden açılmalıdır (Vercel varsayılanı). Site grup fotoğraflarını içerir; herkese açık yayımlamadan önce fotoğraftaki herkesin açık iznini alın.
 
 ## GitHub Pages'te yayınlama
 
@@ -188,7 +191,7 @@ npm run build:pages
 
 (Çıktı `out/` klasöründedir; `/bm447-face-detection/` alt yolunda sunulmalıdır.)
 
-Not: GitHub Pages herkese açıktır — kimliği belirlenebilir grup fotoğraflarını oraya koymayın; yalnız demo kümesiyle yayımlayın.
+Not: GitHub Pages herkese açıktır — site grup fotoğraflarını içerdiği için yalnızca fotoğraftaki herkesin açık izniyle yayımlayın.
 
 ## Docker ile çalıştırma
 
@@ -216,11 +219,14 @@ docker compose --profile experiments run --rm experiments
 
 ## Kendi veri kümenizi kullanma
 
-1. Grup üyelerinin (onaylı) fotoğraflarını çekin: **en az 15**, her koşulda (normal / düşük ışık / ters ışık veya küçük yüz / kısmi örtülme) **en az 5**.
-2. Web uygulamasında **/etiketleme** → görüntüleri seçin → her yüze kutu çizin → koşulu işaretleyin → `annotations.json` indirin.
-3. `dataset/images/` içeriğini kendi fotoğraflarınızla değiştirin, `annotations.json`'ı `dataset/` altına koyun.
-4. `python/run_experiments.py`'yi çalıştırın → `make_report.py` ile Word raporunu yeniden üretin.
-5. Alternatif: **/deneyler** sayfasında “Kendi veri kümem” ile görüntüleri + JSON'u seçip deneyi doğrudan tarayıcıda çalıştırın.
+Projenin veri kümesi grup üyelerinin 6 onaylı fotoğrafından üretilir. Fotoğraf eklemek veya değiştirmek için:
+
+1. Fotoğrafı `dataset/originals/group_XX.jpg` olarak koyun.
+2. Yüz kutularını `dataset/originals/faces_1280.json` içine ekleyin (koordinatlar, uzun kenarı 1280 px'e küçültülmüş görüntüye göre `[x, y, w, h]`). Kutuları web uygulamasındaki **/etiketleme** aracıyla çizip dışa aktarabilirsiniz.
+3. Sırasıyla çalıştırın: `python make_dataset.py` → `python run_experiments.py` → `python make_report.py` ve `python make_report_en.py`.
+4. Alternatif: **/deneyler** sayfasında “Kendi veri kümem” ile görüntüleri + JSON'u seçip deneyi doğrudan tarayıcıda çalıştırın.
+
+Düşük ışık ve ters ışık sürümleri ayrı çekimler değil, aynı fotoğraftan kontrollü olarak türetilir; böylece yüzler ve pozlar sabit kalır, yalnızca ışık değişir. Gerçek düşük ışık çekimleri eklemek isterseniz `annotations.json`'a doğrudan ayrı kayıt olarak ekleyebilirsiniz.
 
 Üçüncü koşul olarak “küçük yüz” veya “kısmi örtülme” seçerseniz `annotations.json` içindeki `conditions` sözlüğünü ve koşul anahtarını (`backlight` yerine ör. `occlusion`) güncelleyin; kod koşul adlarını dosyadan okur.
 
@@ -232,7 +238,6 @@ docker compose --profile experiments run --rm experiments
 | YOLO yüz dedektörü | `yolov8n-face-lindevs.onnx`, release **1.0.1** (Ultralytics 8.3.27 ile dışa aktarılmış, WIDER FACE, 640×640, sınıf: `face`, lisans AGPL-3.0) | <https://github.com/lindevs/yolov8-face/releases/tag/1.0.1> |
 | Python | opencv-python-headless 4.10.0.84, onnxruntime 1.24.4, numpy 2.2.6, scikit-image 0.26.0, matplotlib 3.10.0, python-docx 1.2.0 | `python/requirements.txt` |
 | Web | next 16.4.6, react 19.3.1, onnxruntime-web 1.31.1, @techstark/opencv-js 4.10.0-release.1 | `package.json` |
-| Demo görüntü kaynağı | scikit-image `data.astronaut()` — NASA, kamu malı | <https://scikit-image.org/docs/stable/api/skimage.data.html> |
 
 ## Sabit deney ayarları
 
@@ -245,7 +250,7 @@ docker compose --profile experiments run --rm experiments
 | YOLO | 640×640 letterbox (dolgu 114), conf ≥ 0.35, NMS IoU 0.45 |
 | Eşleştirme | IoU ≥ 0.50, açgözlü bire bir |
 | Süre | `inference_ms` = yalnız model çağrısı; `end_to_end_ms` = ön işleme + model + son işleme. CPU, 1 ısınma çalıştırması sonrası |
-| Rastgelelik | demo veri tohumu 42; dedektörler deterministik |
+| Rastgelelik | koşul türetme tohumu 42; dedektörler deterministik |
 
 Eşikler görüntü başına değiştirilmez.
 

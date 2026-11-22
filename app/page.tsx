@@ -7,9 +7,13 @@ import { readResults } from "@/lib/results";
 export default function Home() {
   const res = readResults();
   const s = (d: string, e: string) => res?.summary.find((r) => r.detector === d && r.enhancement === e);
-  const vjRaw = s("viola_jones", "original"), vjClahe = s("viola_jones", "clahe"), yRaw = s("yolo", "original");
-  const nImg = res ? new Set(res.per_image.map((r) => r.image)).size : 15;
-  const nFace = vjRaw?.gt ?? 41;
+  const vjRaw = s("viola_jones", "original"), yRaw = s("yolo", "original");
+  const nImg = res ? new Set(res.per_image.map((r) => r.image)).size : 18;
+  const nFace = vjRaw?.gt ?? 0;
+  const perCond = Math.round(nImg / 3);
+  // düşük ışıkta Viola-Jones: ham -> histogram eşitleme
+  const c = (d: string, e: string, k: string) => res?.summary_by_condition.find((r) => r.detector === d && r.enhancement === e && r.condition === k);
+  const vjLowRaw = c("viola_jones", "original", "low_light"), vjLowHe = c("viola_jones", "hist_eq", "low_light");
 
   return (
     <section className="bento" aria-label="Overview">
@@ -35,7 +39,7 @@ export default function Home() {
       </div>
 
       <Link href="/deneyler" className="tile tile--img tile--w">
-        <img src={BASE + "/results/figures/examples_lowlight_05.png"} alt="Low-light example: both detectors with four preprocessing variants" />
+        <img src={BASE + "/results/figures/examples_lowlight_03.png"} alt="Low-light example: both detectors with four preprocessing variants" />
         <span className="caption"><T tr="Düşük ışık: ön işleme Viola-Jones'u kurtarıyor" en="Low light: preprocessing rescues Viola-Jones" /></span>
       </Link>
 
@@ -43,13 +47,13 @@ export default function Home() {
         <span className="tile-icon"><Icon name="image" /></span>
         <span className="big-number">{nImg}</span>
         <span className="tile-title"><T tr={`görüntü · ${nFace} yüz`} en={`images · ${nFace} faces`} /></span>
-        <span className="tile-sub"><T tr="3 koşul × 5 görüntü, her yüz için referans kutu" en="3 conditions × 5 images, a ground-truth box for every face" /></span>
+        <span className="tile-sub"><T tr={`${perCond} grup fotoğrafı × 3 koşul (normal, düşük ışık, ters ışık), her yüz için referans kutu`} en={`${perCond} group photos × 3 conditions (normal, low light, backlight), a ground-truth box for every face`} /></span>
       </div>
 
       <div className="tile tile--dark">
-        <span className="tile-title">Viola-Jones recall</span>
-        <span className="big-number">{vjRaw ? Math.round(vjRaw.recall * 100) : "–"}% → {vjClahe ? Math.round(vjClahe.recall * 100) : "–"}%</span>
-        <span className="tile-sub"><T tr="ham görüntü → CLAHE (tüm veri kümesi)" en="raw image → CLAHE (whole dataset)" /></span>
+        <span className="tile-title"><T tr="Viola-Jones, düşük ışık" en="Viola-Jones, low light" /></span>
+        <span className="big-number">{vjLowRaw ? vjLowRaw.tp : "–"} → {vjLowHe ? vjLowHe.tp : "–"}</span>
+        <span className="tile-sub"><T tr={`bulunan yüz (toplam ${vjLowRaw?.gt ?? "–"}): ham → histogram eşitleme`} en={`faces found (of ${vjLowRaw?.gt ?? "–"}): raw → histogram equalization`} /></span>
         <span className="tile-sub tile-foot"><T tr={`YOLO ham görüntüde bile F1 = ${yRaw?.f1.toFixed(2) ?? "–"}`} en={`YOLO reaches F1 = ${yRaw?.f1.toFixed(2) ?? "–"} even on raw images`} /></span>
       </div>
 
@@ -59,8 +63,8 @@ export default function Home() {
         </span>
         <p>
           <T
-            tr={<><b>Hayır.</b> Histogram eşitleme ve CLAHE karanlık sahnelerde Viola-Jones&apos;un kaçırdığı yüzleri geri kazandırırken, zaten iyi aydınlatılmış görüntülerde gürültüyü ve dokuyu da güçlendirip <b>yanlış pozitif</b> üretir. YOLO ise ön işlemeden neredeyse etkilenmez. Kanıtlar Deneyler sayfasında.</>}
-            en={<><b>No.</b> Histogram equalization and CLAHE recover the faces Viola-Jones misses in dark scenes, but on already well-lit images they also amplify noise and texture and create <b>false positives</b>. YOLO is almost unaffected by preprocessing. The evidence is on the Experiments page.</>}
+            tr={<><b>Hayır.</b> Histogram eşitleme ve CLAHE karanlık fotoğraflarda Viola-Jones&apos;un kaçırdığı yüzleri geri kazandırıyor; ama normal ışıkta Viola-Jones&apos;u <b>kötüleştiriyor</b>, ters ışıkta ise görüntüyü en çok “açan” global histogram eşitleme <b>iki dedektöre de zarar veriyor</b>. YOLO ön işlemeden yalnızca birkaç yüz kadar etkileniyor. Kanıtlar Deneyler sayfasında.</>}
+            en={<><b>No.</b> Histogram equalization and CLAHE recover the faces Viola-Jones misses in dark photos, but they make Viola-Jones <b>worse</b> in normal light, and in backlight global histogram equalization — the version that visibly “opens up” the image most — <b>hurts both detectors</b>. YOLO changes by only a few faces. The evidence is on the Experiments page.</>}
           />
         </p>
         <Link href="/deneyler" className="btn btn--sm" style={{ alignSelf: "flex-start", marginTop: "auto" }}><T tr="Kanıtları gör" en="See the evidence" /> <Icon name="arrow" size={14} /></Link>

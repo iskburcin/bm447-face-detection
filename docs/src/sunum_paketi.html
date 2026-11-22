@@ -53,10 +53,9 @@
     <div><b>3.</b> Hocanın sorabileceği sorular ve cevaplar <span class="small">(TR + EN)</span></div>
     <div><b>4.</b> Kaynaklar ve linkler <span class="small">(sorulursa açılacak)</span></div>
   </div>
-  <div class="warn" style="margin-top:12mm">
-    <b>Önemli:</b> Köşeli parantezli sayılar <b>[...]</b> şu anki <b>demo</b> veri kümesinin sonuçlarıdır. Grup fotoğraflarıyla deneyi yeniden
-    çalıştırdıktan sonra <code>results/summary.csv</code> ve <code>results/summary_by_condition.csv</code> dosyalarından güncelleyin.<br>
-    <b>Important:</b> numbers in <b>[brackets]</b> come from the current <b>demo</b> dataset — update them after rerunning the experiment with the group photos.
+  <div class="box" style="margin-top:12mm">
+    <b>Veri kümesi / Dataset:</b> grup üyelerinin onaylı 6 fotoğrafı × 3 koşul (normal, düşük ışık, ters ışık) = 18 görüntü, 72 yüz.<br>
+    6 consented group photos × 3 conditions (normal, low light, backlight) = 18 images, 72 faces.
   </div>
   <p class="small">Canlı site / Live site: https://iskburcin.github.io/bm447-face-detection/ · Kod / Code: https://github.com/iskburcin/bm447-face-detection</p>
 </section>
@@ -92,7 +91,7 @@
     <tr><td>WIDER FACE zorluk seviyeleri (AP %)</td><td>Kolay <b>93,8</b> · Orta <b>91,8</b> · Zor <b>79,4</b> ("zor" = çok küçük ve örtülü yüzler)</td></tr>
   </table>
   <p class="small">Kaynak: github.com/lindevs/yolov8-face (README "Training results" tablosu, <code>train.py</code>, <code>results/train/yolov8n-face/results.txt</code>). Kullandığımız dosya: release 1.0.1 (1 Kasım 2024).</p>
-  <p><b>Neden ön işlemeden etkilenmedi?</b> Eğitim sırasında fotoğraflar zaten rastgele aydınlatılıp karartıldı ve WIDER FACE'te karanlık/ters ışıklı çok sayıda yüz var. Model "ışık değişse de yüz yüzdür" demeyi öğrenmiş; bizim parlaklık ayarımız ona yeni bir bilgi vermiyor.</p>
+  <p><b>Neden ön işlemeden çok az etkilendi?</b> Eğitim sırasında fotoğraflar zaten rastgele aydınlatılıp karartıldı ve WIDER FACE'te karanlık/ters ışıklı çok sayıda yüz var. Model "ışık değişse de yüz yüzdür" demeyi öğrenmiş; bizim deneyimizde ön işleme sonucunu en fazla bir-iki yüz değiştirdi.</p>
 
   <h3>Neden YOLOv8? Neden en yeni YOLO değil?</h3>
   <ol>
@@ -143,7 +142,7 @@
     <tr><td>WIDER FACE difficulty levels (AP %)</td><td>Easy <b>93.8</b> · Medium <b>91.8</b> · Hard <b>79.4</b> ("hard" = very small and occluded faces)</td></tr>
   </table>
   <p class="small">Source: github.com/lindevs/yolov8-face (README "Training results", <code>train.py</code>, <code>results/train/yolov8n-face/results.txt</code>). File used: release 1.0.1 (1 Nov 2024).</p>
-  <p><b>Why didn't preprocessing affect it?</b> During training the photos were already randomly brightened and darkened, and WIDER FACE contains many dark and backlit faces. The model learned that "a face is a face, whatever the lighting", so our brightness adjustment gives it no new information.</p>
+  <p><b>Why was it barely affected by preprocessing?</b> During training the photos were already randomly brightened and darkened, and WIDER FACE contains many dark and backlit faces. The model learned that "a face is a face, whatever the lighting"; in our experiment preprocessing changed its result by one or two faces at most.</p>
 
   <h3>Why YOLOv8 and not the newest YOLO?</h3>
   <ol>
@@ -171,36 +170,37 @@
   <h3>1 · Opening <span class="time">≈ 40 s</span></h3>
   <div class="say en"><p>Good morning, professor. Our project is about face detection and people counting under difficult lighting.</p>
   <p>We wanted to answer one question: <b>does an image that looks better to the human eye always give better face detection?</b></p>
-  <p>To answer it, we compared a classical detector and a deep-learning detector on the same images, under three lighting conditions, with and without image enhancement, and we measured everything with the same metrics.</p></div>
+  <p>To answer it, we compared a classical detector and a deep-learning detector on the same photos, under three lighting conditions, with and without image enhancement, and we measured everything with the same metrics.</p></div>
 
-  <h3>2 · Data <span class="time">≈ 40 s</span></h3>
-  <div class="say en"><p>Our dataset has <b>[15] images</b> with <b>[41] faces</b>, five images for each condition: <b>normal light, low light and backlight</b>.</p>
-  <p>We drew a box around every visible face and recorded the true number of people in each image. Both detectors were tested on exactly the same images and the same labels.</p></div>
+  <h3>2 · Data <span class="time">≈ 45 s</span></h3>
+  <div class="say en"><p>We used <b>six photos of our own group</b>, taken at night and in daylight, indoors and outdoors — selfies and a standing group shot. Visible faces of people in the background count too.</p>
+  <p>Each photo is used in <b>three conditions</b>: as it is, a <b>low-light</b> version and a <b>backlit</b> version. We created the dark and backlit versions from the same photo in a controlled way, so the faces and poses stay identical and only the lighting changes. That gives <b>18 images</b> with <b>72 faces</b>.</p>
+  <p>We drew a box around every visible face. Both detectors were tested on exactly the same images and the same labels.</p></div>
 
-  <h3>3 · The two models <span class="time">≈ 1 min 20 s</span></h3>
-  <div class="say en"><p><b>The first model is Viola-Jones</b>, using OpenCV's ready-made frontal-face cascade. It works on the gray image. It slides a small window over the image at many sizes and checks simple brightness patterns — for example, "the eye area is darker than the cheeks". A chain of 25 stages throws away non-face windows very early, which makes it fast. Our fixed settings are: scale factor 1.1, minimum neighbours 5, minimum face size 24 by 24 pixels.</p>
-  <p><b>The second model is YOLOv8n-face</b> — the smallest YOLO version 8 network, trained specifically for faces on the WIDER FACE dataset, which has more than three hundred thousand labelled faces. We did not use the generic "person" class. The image is resized to 640 by 640, the network proposes candidate boxes with a confidence score, we keep boxes above 0.35 and remove duplicate boxes on the same face.</p>
-  <p>The key difference: Viola-Jones relies on <b>brightness rules designed by people</b>; YOLO relies on <b>features it learned from a very large and varied dataset</b>. We expected them to react to lighting differently, and they did.</p></div>
+  <h3>3 · The two models <span class="time">≈ 1 min 15 s</span></h3>
+  <div class="say en"><p><b>The first model is Viola-Jones</b>, using OpenCV's ready-made frontal-face cascade. It works on the gray image. It slides a small window over the image at many sizes and checks simple brightness patterns — for example, "the eye area is darker than the cheeks". A chain of 25 stages throws away non-face windows very early. Our fixed settings are: scale factor 1.1, minimum neighbours 5, minimum face size 24 by 24 pixels.</p>
+  <p><b>The second model is YOLOv8n-face</b> — the smallest YOLO version 8 network, trained specifically for faces on the WIDER FACE dataset, which has more than three hundred thousand labelled faces. We did not use the generic "person" class. The network proposes candidate boxes with a confidence score; we keep boxes above 0.35 and remove duplicate boxes on the same face.</p>
+  <p>The key difference: Viola-Jones relies on <b>brightness rules designed by people</b>; YOLO relies on <b>features it learned from a very large and varied dataset</b>.</p></div>
 
   <h3>4 · Enhancement and setup <span class="time">≈ 1 min</span></h3>
   <div class="say en"><p>We tested four versions of every image: the <b>raw</b> image; <b>brightness and contrast</b> adjustment; <b>histogram equalization</b>, which <b>we implemented ourselves</b> without any library function — its output is pixel-for-pixel identical to OpenCV's; and <b>CLAHE</b>, which equalizes small tiles of the image separately.</p>
   <p>All detector settings stayed <b>fixed</b> for every image; we never tuned a threshold for a single image.</p>
-  <p>A prediction counts as correct when it overlaps the true face box by at least 50 percent, and each true face can be matched only once. We report true positives, false positives, missed faces, precision, recall, F1, the counting error per image, its mean over the dataset, and the processing time.</p></div>
+  <p>A prediction counts as correct when it overlaps the true face box by at least 50 percent, and each true face can be matched only once. We report correct and false detections, missed faces, precision, recall, F1, the counting error and the processing time.</p></div>
 
   <h3>5 · Results <span class="time">≈ 1 min 30 s</span></h3>
-  <div class="say en"><p><b>YOLO first.</b> On raw images YOLO already reaches <b>F1 [1.00]</b> with <b>no counting error</b>, and it stays there for every enhancement and every lighting condition. Enhancement did not help it; it only added processing time.</p>
-  <p><b>Viola-Jones is the interesting case.</b> On raw images its F1 is only <b>[0.59]</b>: everything it finds is correct, but it finds only <b>[41]%</b> of the faces. Almost all misses are in low light, where it found <b>[0 of 15]</b> faces, and in backlight.</p>
-  <p>Brightness and contrast raised F1 to <b>[0.78]</b>, but it still found <b>[none]</b> of the low-light faces. Histogram equalization raised F1 to <b>[0.91]</b>. CLAHE gave the best result: <b>F1 [0.96]</b>, finding <b>[all]</b> faces.</p>
-  <p><b>But</b> — and this is our main finding — on the <b>normal-light</b> images the same enhancements made Viola-Jones <b>worse</b>: CLAHE added <b>[3]</b> false detections and histogram equalization <b>[1]</b>, where the raw images had none. Equalization also amplifies background texture and noise, and Viola-Jones sees new face-like patterns in them.</p>
-  <p>On speed, Viola-Jones is faster: about <b>[42] ms</b> per image versus <b>[174] ms</b> for YOLO on our computer, but adding CLAHE makes Viola-Jones about three times slower end to end.</p></div>
+  <div class="say en"><p><b>Overall, YOLO is far better.</b> On the raw images YOLO reaches an <b>F1 of 0.93</b>, Viola-Jones only <b>0.50</b>: Viola-Jones finds just over a third of the faces. On our 1280-pixel images YOLO is even faster: about 51 milliseconds against 92.</p>
+  <p><b>Low light is where enhancement helps.</b> On the dark images Viola-Jones finds only <b>4 of 24</b> faces. With our histogram equalization it finds <b>14</b> — three and a half times more. Simple brightness and contrast adjustment barely helps.</p>
+  <p><b>But in backlight, the picture that looks best is not the one that detects best.</b> Global histogram equalization visibly brightens the backlit images, yet it made <b>both</b> detectors worse: Viola-Jones went from 8 to 6 correct faces, YOLO from 21 to 19. CLAHE, which works locally, improved both.</p>
+  <p><b>And in normal light</b>, enhancement made Viola-Jones worse: with CLAHE it found 12 faces instead of 15.</p>
+  <p>YOLO changed by only one or two faces in every case; its best result was with CLAHE, F1 0.95.</p></div>
 
   <h3>6 · Answer to the research question <span class="time">≈ 40 s</span></h3>
   <div class="say en"><p>So, does a visually better image always give better detection? <b>No.</b></p>
-  <p>Histogram equalization gives the image with the most contrast — the one that "looks best" — but for Viola-Jones the best result came from CLAHE, and on images that were already well lit, both equalizations <b>hurt</b>. For YOLO, enhancement made <b>no difference</b>.</p>
-  <p>Whether enhancement helps depends on two things: <b>the detector</b> — hand-designed features need it, learned features don't — and <b>the starting image</b> — it helps dark and backlit images and harms good ones. So in practice enhancement should be used <b>only when needed</b>, for example only when the image is dark.</p></div>
+  <p>The effect depends on three things: <b>the detector</b> — hand-designed features need enhancement, learned features hardly do; <b>the starting image</b> — enhancement helps dark images and hurts good ones; and <b>the method</b> — global equalization can hurt, local CLAHE is safer.</p>
+  <p>So in practice enhancement should be used <b>only when needed</b>, for example only when the image is dark, and with a local method like CLAHE.</p></div>
 
   <h3>7 · Limitations and closing <span class="time">≈ 30 s</span></h3>
-  <div class="say en"><p>Our main limitation is the small dataset: [15] images show a clear tendency, not a general statistical result. The frontal cascade also cannot find side-turned faces or faces smaller than 24 pixels.</p>
+  <div class="say en"><p>Our dataset is small — six photos — so the results show a tendency, not a general statistic. The dark and backlit versions were created from the photos, so real low light, with motion blur and colour noise, could be harder. And the frontal cascade cannot find side-turned faces or faces smaller than 24 pixels.</p>
   <p>Thank you. We are happy to run both detectors on any image you choose, or to change a parameter and show the effect.</p></div>
 </section>
 
@@ -211,39 +211,40 @@
   <h3>1 · Açılış</h3>
   <div class="say"><p>Günaydın hocam. Projemiz zorlu ışık koşullarında yüz tespiti ve kişi sayma üzerine.</p>
   <p>Tek bir soruya cevap aradık: <b>İnsan gözüne daha iyi görünen bir görüntü her zaman daha iyi yüz tespiti sağlar mı?</b></p>
-  <p>Bunun için aynı görüntülerde klasik bir dedektörü ve derin öğrenme tabanlı bir dedektörü üç ışık koşulunda, iyileştirmeli ve iyileştirmesiz karşılaştırdık ve hepsini aynı ölçütlerle ölçtük.</p></div>
+  <p>Bunun için aynı fotoğraflarda klasik bir dedektörü ve derin öğrenme tabanlı bir dedektörü üç ışık koşulunda, iyileştirmeli ve iyileştirmesiz karşılaştırdık ve hepsini aynı ölçütlerle ölçtük.</p></div>
 
   <h3>2 · Veri</h3>
-  <div class="say"><p>Veri kümemizde <b>[15] görüntü</b> ve <b>[41] yüz</b> var; normal ışık, düşük ışık ve ters ışık için beşer görüntü.</p>
-  <p>Görünen her yüzün etrafına kutu çizdik ve her görüntüdeki gerçek kişi sayısını kaydettik. İki dedektör de tamamen aynı görüntü ve etiketlerle test edildi.</p></div>
+  <div class="say"><p><b>Kendi grubumuzdan altı fotoğraf</b> kullandık; gece ve gündüz, iç ve dış mekânda, selfie'ler ve ayakta bir grup fotoğrafı. Arka plandaki kişilerin görünen yüzleri de sayıldı.</p>
+  <p>Her fotoğraf <b>üç koşulda</b> kullanıldı: olduğu gibi, <b>düşük ışık</b> sürümü ve <b>ters ışık</b> sürümü. Karanlık ve ters ışık sürümlerini aynı fotoğraftan kontrollü olarak ürettik; böylece yüzler ve pozlar aynı kalıyor, yalnızca ışık değişiyor. Toplam <b>18 görüntü</b> ve <b>72 yüz</b>.</p>
+  <p>Görünen her yüzün etrafına kutu çizdik. İki dedektör de tamamen aynı görüntü ve etiketlerle test edildi.</p></div>
 
   <h3>3 · İki model</h3>
-  <div class="say"><p><b>Birinci model Viola-Jones</b>; OpenCV'nin hazır ön yüz modelini kullandık. Gri görüntüde çalışır. Görüntü üzerinde farklı boyutlarda küçük bir pencere kaydırır ve basit parlaklık kalıplarına bakar; örneğin "göz bölgesi yanaklardan daha koyudur". 25 aşamalı bir zincir yüz olmayan pencereleri çok erken eler, bu yüzden hızlıdır. Sabit ayarlarımız: scale factor 1.1, minimum komşu 5, en küçük yüz 24×24 piksel.</p>
-  <p><b>İkinci model YOLOv8n-face</b>; YOLO 8. sürümün en küçük ağı, üç yüz binden fazla etiketli yüz içeren WIDER FACE veri kümesinde yalnızca yüz için eğitilmiş. Genel "person" sınıfını kullanmadık. Görüntü 640×640'a getirilir, ağ güven skoruyla aday kutular önerir; 0,35'in üstündekileri tutar, aynı yüze düşen tekrar kutuları sileriz.</p>
-  <p>Temel fark: Viola-Jones <b>insanların tasarladığı parlaklık kurallarına</b>, YOLO ise <b>çok büyük ve çeşitli bir veriden kendi öğrendiği özelliklere</b> dayanır. Işığa farklı tepki vermelerini bekledik; öyle de oldu.</p></div>
+  <div class="say"><p><b>Birinci model Viola-Jones</b>; OpenCV'nin hazır ön yüz modeli. Gri görüntüde çalışır, farklı boyutlarda küçük bir pencere kaydırıp basit parlaklık kalıplarına bakar; örneğin "göz bölgesi yanaklardan daha koyudur". 25 aşamalı bir zincir yüz olmayan pencereleri çok erken eler. Sabit ayarlarımız: scale factor 1.1, minimum komşu 5, en küçük yüz 24×24 piksel.</p>
+  <p><b>İkinci model YOLOv8n-face</b>; YOLO 8. sürümün en küçük ağı, üç yüz binden fazla etiketli yüz içeren WIDER FACE veri kümesinde yalnızca yüz için eğitilmiş. Genel "person" sınıfını kullanmadık. Ağ güven skoruyla aday kutular önerir; 0,35'in üstündekileri tutar, aynı yüze düşen tekrar kutuları sileriz.</p>
+  <p>Temel fark: Viola-Jones <b>insanların tasarladığı parlaklık kurallarına</b>, YOLO <b>çok büyük ve çeşitli bir veriden öğrendiği özelliklere</b> dayanır.</p></div>
 
   <h3>4 · İyileştirme ve deney düzeni</h3>
-  <div class="say"><p>Her görüntünün dört sürümünü test ettik: <b>ham</b> görüntü; <b>parlaklık ve kontrast</b> ayarı; hiçbir kütüphane fonksiyonu kullanmadan <b>kendimiz yazdığımız histogram eşitleme</b> (çıktısı OpenCV'ninkiyle piksel piksel aynı); ve görüntünün küçük bölgelerini ayrı ayrı eşitleyen <b>CLAHE</b>.</p>
+  <div class="say"><p>Her görüntünün dört sürümünü test ettik: <b>ham</b>; <b>parlaklık ve kontrast</b> ayarı; hiçbir kütüphane fonksiyonu kullanmadan <b>kendimiz yazdığımız histogram eşitleme</b> (çıktısı OpenCV'ninkiyle piksel piksel aynı); ve görüntünün küçük bölgelerini ayrı ayrı eşitleyen <b>CLAHE</b>.</p>
   <p>Dedektör ayarları her görüntüde <b>sabit</b> kaldı; hiçbir eşiği tek bir görüntüye göre ayarlamadık.</p>
-  <p>Bir tahmin, gerçek yüz kutusuyla en az yüzde 50 örtüşürse doğru sayılır ve her gerçek yüz yalnızca bir kez eşleşebilir. Doğru tespit, yanlış tespit, kaçırılan yüz, precision, recall, F1, görüntü başına sayma hatası, bunun ortalaması ve işlem süresini raporladık.</p></div>
+  <p>Bir tahmin, gerçek yüz kutusuyla en az yüzde 50 örtüşürse doğru sayılır ve her gerçek yüz yalnızca bir kez eşleşebilir. Doğru ve yanlış tespit, kaçırılan yüz, precision, recall, F1, sayma hatası ve işlem süresini raporladık.</p></div>
 
   <h3>5 · Sonuçlar</h3>
-  <div class="say"><p><b>Önce YOLO.</b> Ham görüntüde bile <b>F1 [1,00]</b> ve <b>sıfır sayma hatası</b>; her iyileştirmede ve her ışık koşulunda aynı kaldı. İyileştirme ona yardım etmedi, sadece süreyi uzattı.</p>
-  <p><b>Asıl ilginç olan Viola-Jones.</b> Ham görüntüde F1 yalnızca <b>[0,59]</b>: bulduğu her şey doğru ama yüzlerin sadece <b>%[41]</b>'ini buluyor. Kayıpların neredeyse hepsi düşük ışıkta (15 yüzden <b>[0]</b>) ve ters ışıkta.</p>
-  <p>Parlaklık/kontrast F1'i <b>[0,78]</b>'e çıkardı ama düşük ışıktaki yüzlerin <b>[hiçbirini]</b> yine bulamadı. Histogram eşitleme <b>[0,91]</b>'e çıkardı. En iyi sonuç CLAHE: <b>F1 [0,96]</b>, yüzlerin <b>[hepsi]</b> bulundu.</p>
-  <p><b>Ama</b> — asıl bulgumuz bu — <b>normal ışıklı</b> görüntülerde aynı iyileştirmeler Viola-Jones'u <b>kötüleştirdi</b>: ham görüntüde hiç yanlış tespit yokken CLAHE <b>[3]</b>, histogram eşitleme <b>[1]</b> yanlış tespit ekledi. Eşitleme arka plandaki dokuyu ve gürültüyü de güçlendiriyor; Viola-Jones bunlarda yüze benzeyen yeni kalıplar görüyor.</p>
-  <p>Hız: bizim bilgisayarımızda Viola-Jones görüntü başına yaklaşık <b>[42] ms</b>, YOLO <b>[174] ms</b>; ama CLAHE eklenince Viola-Jones'un toplam süresi yaklaşık üç katına çıkıyor.</p></div>
+  <div class="say"><p><b>Genel olarak YOLO çok daha iyi.</b> Ham görüntülerde YOLO <b>F1 0,93</b>, Viola-Jones yalnızca <b>0,50</b>: Viola-Jones yüzlerin üçte birinden biraz fazlasını buluyor. 1280 piksellik görüntülerimizde YOLO daha hızlı bile: yaklaşık 51 ms'ye karşı 92 ms.</p>
+  <p><b>İyileştirmenin işe yaradığı yer düşük ışık.</b> Karanlık görüntülerde Viola-Jones 24 yüzden yalnızca <b>4</b>'ünü buluyor; kendi yazdığımız histogram eşitlemeyle <b>14</b>'ünü buluyor, yani üç buçuk kat fazla. Basit parlaklık/kontrast ayarı ise neredeyse yardım etmiyor.</p>
+  <p><b>Ama ters ışıkta en iyi görünen görüntü en iyi tespit edilen değil.</b> Global histogram eşitleme ters ışıklı görüntüleri gözle belirgin biçimde aydınlatıyor, ama <b>iki dedektörü de</b> kötüleştirdi: Viola-Jones 8'den 6 doğru yüze, YOLO 21'den 19'a düştü. Yerel çalışan CLAHE ise ikisini de iyileştirdi.</p>
+  <p><b>Normal ışıkta</b> da iyileştirme Viola-Jones'u kötüleştirdi: CLAHE ile 15 yerine 12 yüz buldu.</p>
+  <p>YOLO her durumda yalnızca bir-iki yüz değişti; en iyi sonucu CLAHE ile aldı, F1 0,95.</p></div>
 
   <h3>6 · Araştırma sorusunun cevabı</h3>
   <div class="say"><p>Yani daha iyi görünen görüntü her zaman daha iyi tespit sağlar mı? <b>Hayır.</b></p>
-  <p>Histogram eşitleme en kontrastlı, "en iyi görünen" görüntüyü verir; ama Viola-Jones için en iyi sonuç CLAHE'deydi ve zaten iyi aydınlatılmış görüntülerde iki eşitleme de <b>zarar verdi</b>. YOLO'da ise iyileştirme <b>hiç fark yaratmadı</b>.</p>
-  <p>İyileştirmenin işe yarayıp yaramaması iki şeye bağlı: <b>dedektöre</b> (elle tasarlanmış özellikler ihtiyaç duyar, öğrenilmiş özellikler duymaz) ve <b>başlangıçtaki görüntüye</b> (karanlık ve ters ışıklı görüntüye yardım eder, iyi görüntüye zarar verir). Bu yüzden pratikte iyileştirme <b>sadece gerektiğinde</b>, örneğin görüntü karanlıksa, uygulanmalı.</p></div>
+  <p>Etki üç şeye bağlı: <b>dedektöre</b> (elle tasarlanmış özellikler iyileştirmeye ihtiyaç duyar, öğrenilmiş özellikler pek duymaz); <b>başlangıçtaki görüntüye</b> (karanlık görüntüye yardım eder, iyi görüntüye zarar verir); ve <b>yönteme</b> (global eşitleme zarar verebilir, yerel CLAHE daha güvenli).</p>
+  <p>Bu yüzden pratikte iyileştirme <b>sadece gerektiğinde</b>, örneğin görüntü karanlıksa ve CLAHE gibi yerel bir yöntemle uygulanmalı.</p></div>
 
   <h3>7 · Sınırlılık ve kapanış</h3>
-  <div class="say"><p>En büyük sınırlılığımız küçük veri kümesi: [15] görüntü net bir eğilim gösteriyor ama genel bir istatistiksel sonuç değil. Ön yüz modeli yana dönük yüzleri ve 24 pikselden küçük yüzleri de bulamıyor.</p>
+  <div class="say"><p>Veri kümemiz küçük, altı fotoğraf; sonuçlar genel bir istatistik değil, bir eğilim gösteriyor. Karanlık ve ters ışık sürümleri fotoğraflardan üretildiği için hareket bulanıklığı ve renk gürültüsü olan gerçek düşük ışık daha zor olabilir. Ön yüz modeli yana dönük yüzleri ve 24 pikselden küçük yüzleri de bulamıyor.</p>
   <p>Teşekkür ederiz. İsterseniz seçeceğiniz bir görüntüde iki dedektörü de çalıştırabilir veya bir parametreyi değiştirip etkisini gösterebiliriz.</p></div>
 
-  <div class="box"><b>Prova notları:</b> Süre kısalırsa 4. bölümü kısaltın; 5 ve 6'yı asla kısaltmayın. Vurgulanacak üç cümle: <i>"we implemented histogram equalization ourselves"</i>, <i>"settings stayed fixed"</i>, <i>"No — it depends on the detector and the starting image."</i> Gerçek fotoğraflarla sonuçlar değişirse 5. bölümdeki yorumları (özellikle YOLO'nun F1 = 1,00 olması) yeni sonuca göre düzeltin.</div>
+  <div class="box"><b>Prova notları:</b> Süre kısalırsa 3. ve 4. bölümleri kısaltın; 5 ve 6'yı asla kısaltmayın. Vurgulanacak üç cümle: <i>"we implemented histogram equalization ourselves"</i>, <i>"the picture that looks best is not the one that detects best"</i>, <i>"No — it depends on the detector, the starting image and the method."</i></div>
 </section>
 
 <!-- ============================ 3. SORULAR ============================ -->
@@ -282,9 +283,9 @@
   </div>
 
   <div class="q">
-    <div class="qt">6. YOLO neden ön işlemeden etkilenmedi? / Why was YOLO not affected by preprocessing?</div>
-    <p class="a"><span class="lang">TR</span>Eğitim verisinde çok sayıda karanlık ve ters ışıklı yüz var ve eğitim sırasında fotoğrafların parlaklığı zaten rastgele değiştirildi. Model ışık değişimine dayanıklı özellikler öğrenmiş; ön işleme ona yeni bilgi vermiyor, sadece süreyi uzatıyor.</p>
-    <p class="a"><span class="lang en">EN</span>Its training data contains many dark and backlit faces, and photos were randomly brightened and darkened during training. It learned lighting-robust features, so preprocessing gives it no new information; it only adds time.</p>
+    <div class="qt">6. YOLO neden ön işlemeden çok az etkilendi? / Why was YOLO barely affected by preprocessing?</div>
+    <p class="a"><span class="lang">TR</span>Eğitim verisinde çok sayıda karanlık ve ters ışıklı yüz var ve eğitim sırasında fotoğrafların parlaklığı zaten rastgele değiştirildi. Model ışık değişimine dayanıklı özellikler öğrenmiş; ön işleme sonucunu en fazla bir-iki yüz değiştirdi (en iyi: CLAHE, F1 0,95), ama süreyi uzattı.</p>
+    <p class="a"><span class="lang en">EN</span>Its training data contains many dark and backlit faces, and photos were randomly brightened and darkened during training. It learned lighting-robust features, so preprocessing changed its result by one or two faces at most (best: CLAHE, F1 0.95), while adding time.</p>
   </div>
 
   <div class="q">
@@ -294,9 +295,9 @@
   </div>
 
   <div class="q">
-    <div class="qt">8. İyileştirme neden normal ışıkta zarar verdi? / Why did enhancement hurt in normal light?</div>
-    <p class="a"><span class="lang">TR</span>Normal görüntüde kontrast zaten yeterli. Eşitleme arka plandaki desenleri ve gürültüyü de güçlendiriyor; Viola-Jones bu yeni parlaklık kalıplarını yüz sanıp yanlış tespit üretiyor.</p>
-    <p class="a"><span class="lang en">EN</span>A normal image already has enough contrast. Equalization also strengthens background patterns and noise, and Viola-Jones mistakes these new brightness patterns for faces, producing false detections.</p>
+    <div class="qt">8. İyileştirme neden normal ışıkta ve ters ışıkta zarar verdi? / Why did enhancement hurt in normal light and in backlight?</div>
+    <p class="a"><span class="lang">TR</span>Normal görüntüde kontrast zaten yeterli; eşitleme yüzün parlaklık kalıbını değiştiriyor, arka plan desenini ve gürültüyü güçlendiriyor (CLAHE ile VJ 15 → 12 yüz). Ters ışıkta parlak arka plan global histogramı domine ediyor: HE parlak alanı açarken yüzleri yeterince açamıyor ve gürültüyü büyütüyor (VJ 8 → 6, YOLO 21 → 19). Yerel çalışan CLAHE bu yüzden ters ışıkta daha iyi.</p>
+    <p class="a"><span class="lang en">EN</span>A normal image already has enough contrast; equalization changes the brightness pattern of the face and amplifies background texture and noise (CLAHE: VJ 15 → 12 faces). In backlight the bright background dominates the global histogram: HE opens up the bright area but not the faces, and amplifies noise (VJ 8 → 6, YOLO 21 → 19). That is why local CLAHE works better in backlight.</p>
   </div>
 
   <div class="q">
@@ -319,8 +320,8 @@
 
   <div class="q">
     <div class="qt">12. Model ne kadar doğru, zayıf yanı ne? / How accurate is the model, and what is its weakness?</div>
-    <p class="a"><span class="lang">TR</span>WIDER FACE testinde kolay yüzlerde %93,8, orta %91,8, zor %79,4 doğruluk (AP). Zayıf yanı çok küçük ve örtülü yüzler. Daha büyük sürümler (s, m, l, x) daha doğru ama daha yavaş.</p>
-    <p class="a"><span class="lang en">EN</span>On the WIDER FACE benchmark it scores 93.8% (easy), 91.8% (medium) and 79.4% (hard) AP. Its weakness is very small and occluded faces. Larger versions (s, m, l, x) are more accurate but slower.</p>
+    <p class="a"><span class="lang">TR</span>WIDER FACE testinde kolay yüzlerde %93,8, orta %91,8, zor %79,4 doğruluk (AP). Zayıf yanı çok küçük ve örtülü yüzler. Bizim veri kümemizde ham görüntülerde precision 0,985, recall 0,889, F1 0,934. Daha büyük sürümler (s, m, l, x) daha doğru ama daha yavaş.</p>
+    <p class="a"><span class="lang en">EN</span>On the WIDER FACE benchmark it scores 93.8% (easy), 91.8% (medium) and 79.4% (hard) AP. Its weakness is very small and occluded faces. On our dataset (raw images): precision 0.985, recall 0.889, F1 0.934. Larger versions (s, m, l, x) are more accurate but slower.</p>
   </div>
 
   <div class="q">
@@ -331,8 +332,26 @@
 
   <div class="q">
     <div class="qt">14. Sonuçlar genellenebilir mi? Neyi geliştirirdiniz? / Can the results be generalized? What would you improve?</div>
-    <p class="a"><span class="lang">TR</span>Veri kümesi küçük; net bir eğilim gösteriyor ama genel bir istatistik değil. Geliştirme: daha çok fotoğraf; iyileştirmeyi yalnız görüntü karanlıksa uygulamak; CLAHE'den önce gürültü azaltmak; yana dönük yüzler için ek bir Viola-Jones modeli.</p>
-    <p class="a"><span class="lang en">EN</span>The dataset is small; it shows a clear tendency, not a general statistic. Improvements: more photos; applying enhancement only when the image is dark; noise reduction before CLAHE; an extra Viola-Jones model for side-turned faces.</p>
+    <p class="a"><span class="lang">TR</span>Veri kümesi küçük (6 fotoğraf, 18 görüntü); net bir eğilim gösteriyor ama genel bir istatistik değil. Düşük ışık ve ters ışık sürümleri fotoğraflardan türetildi; gerçek düşük ışık daha zor olabilir. Geliştirme: daha çok fotoğraf; iyileştirmeyi yalnız görüntü karanlıksa uygulamak; CLAHE'den önce gürültü azaltmak; yana dönük yüzler için ek bir Viola-Jones modeli.</p>
+    <p class="a"><span class="lang en">EN</span>The dataset is small (6 photos, 18 images); it shows a clear tendency, not a general statistic. The low-light and backlit versions are derived from the photos; real low light could be harder. Improvements: more photos; applying enhancement only when the image is dark; noise reduction before CLAHE; an extra Viola-Jones model for side-turned faces.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">16. Düşük ışık ve ters ışık görüntüleri neden ayrıca çekilmedi? / Why weren't the low-light and backlit images shot separately?</div>
+    <p class="a"><span class="lang">TR</span>Kontrollü karşılaştırma için: aynı fotoğraftan türetince yüzler, pozlar ve kişi sayısı aynı kalıyor, yalnız ışık değişiyor; farkı doğrudan ışığa bağlayabiliyoruz. Dönüşümler sabit ve tekrarlanabilir (gama, kazanç, gürültü; ters ışıkta kişi maskesi + aşırı pozlanmış arka plan, tohum 42). Sınırlılığı da biliyoruz: gerçek karanlıkta hareket bulanıklığı, renk gürültüsü ve kameranın otomatik pozlaması da olur.</p>
+    <p class="a"><span class="lang en">EN</span>For a controlled comparison: deriving them from the same photo keeps the faces, poses and number of people identical and changes only the lighting, so differences can be attributed to lighting. The transforms are fixed and reproducible (gamma, gain, noise; for backlight a person mask plus an over-exposed background, seed 42). We know the limitation: real darkness also brings motion blur, colour noise and camera auto-exposure.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">17. Referans kutuları nasıl çizdiniz? YOLO lehine yanlılık var mı? / How did you draw the ground truth? Is it biased toward YOLO?</div>
+    <p class="a"><span class="lang">TR</span>YOLO düşük eşikle (0,10) ve Viola-Jones aday kutu önerdi; her öneriyi görsel olarak tek tek kontrol ettik. Yalnız gerçekten görünen yüzleri tuttuk: arkası dönük kişileri çıkardık, kenarda kesilen veya elle kısmen örtülen yüzleri tuttuk. Dürüst olmak gerekirse kutu sınırları YOLO'nun kutu tarzına yakın, bu da IoU'yu biraz YOLO lehine çevirebilir; ama YOLO ile VJ arasındaki fark (F1 0,93'e 0,50) bunun açıklayabileceğinden çok büyük.</p>
+    <p class="a"><span class="lang en">EN</span>YOLO at a low threshold (0.10) and Viola-Jones proposed candidates, and we checked every proposal visually. We kept only genuinely visible faces: people facing away were removed, faces cut by the border or partly covered by a hand were kept. To be honest, the box borders follow YOLO's style, which may tilt IoU slightly toward YOLO — but the gap between YOLO and VJ (F1 0.93 vs 0.50) is far larger than that could explain.</p>
+  </div>
+
+  <div class="q">
+    <div class="qt">18. YOLO neden tam puan almadı? / Why didn't YOLO get a perfect score?</div>
+    <p class="a"><span class="lang">TR</span>Referansa arka plandaki küçük ve bulanık yüzleri de dahil ettik (bazıları 20 piksel civarı) ve kenarda kesilen yüzler var. YOLO'nun kaçırdıkları çoğunlukla bunlar; ana kişileri neredeyse her koşulda buldu.</p>
+    <p class="a"><span class="lang en">EN</span>Our ground truth includes small, blurry background faces (some around 20 pixels) and faces cut by the image border. YOLO's misses are mostly these; it found the main people in almost every condition.</p>
   </div>
 
   <div class="q">

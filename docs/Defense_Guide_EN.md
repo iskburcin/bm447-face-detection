@@ -15,8 +15,8 @@ For every algorithm it explains **what** it is, **why** we chose it and **where*
 |---|---|---|
 | 0:00–0:40 | Goal + research question, two detectors, three conditions | Home page (`/`) |
 | 0:40–1:30 | Flowchart: image → 4 preprocessing options → gray/letterbox → VJ/YOLO → IoU → metrics | **Method** page (`/yontem`) or `docs/akis_semasi.png` |
-| 1:30–3:00 | **Live demo**: pick a low-light sample → raw: VJ finds 0 faces, YOLO finds all → apply the “CLAHE” preset → VJ now finds the faces. Then normal light + HE → false positive in VJ. Live mode with the camera. | **Live Detection** (`/tespit`) |
-| 3:00–4:00 | Result tables, heat map, “visually better ≠ better detection” | **Experiments** (`/deneyler`) |
+| 1:30–3:00 | **Live demo**: pick a low-light sample → raw: VJ misses most faces, YOLO finds most of them → apply the “HE” preset → VJ now finds the faces. Then backlight + HE → both detectors get worse, CLAHE fixes it. Normal light + CLAHE → VJ loses faces. Live mode with the camera. | **Live Detection** (`/tespit`) |
+| 3:00–4:00 | Result tables, heat map, “visually better ≠ better detection” (global HE in backlight) | **Experiments** (`/deneyler`) |
 | 4:00–5:00 | Hand-written histogram equalization: CDF → LUT, difference from `cv2.equalizeHist` is 0. One lesson from the Lab (e.g. Viola-Jones raw candidates, or YOLO before/after NMS) | **Lecture Lab** (`/laboratuvar#histogram`, `#vj`, `#yolo`) |
 
 Pre-demo check: run with `npm run build && npm start` (or `docker compose up`), open the page once and make sure the models have loaded (✓ marks); no internet connection is needed (the models are served by the server).
@@ -25,26 +25,41 @@ Pre-demo check: run with `npm run build && npm start` (or `docker compose up`), 
 
 ## 1. Project summary (memorize this)
 
-> “We measured how lighting and image enhancement affect face detection. We compared the classic Viola-Jones detector with YOLOv8n-face, a model trained specifically for faces, under normal, low and back lighting, with four preprocessing options — raw, brightness/contrast, histogram equalization and CLAHE — using the same data and fixed settings. We matched detections one-to-one with IoU ≥ 0.5 and reported TP, FP, FN, precision, recall, F1, counting error, MAE and run times. The result: enhancement rescues the classic detector in the dark, but adds false positives in good lighting, while YOLO is almost unaffected. In other words, a visually better image does not always mean better detection.”
+> “We measured how lighting and image enhancement affect face detection. We compared the classic Viola-Jones detector with YOLOv8n-face, a model trained specifically for faces, under normal, low and back lighting, with four preprocessing options — raw, brightness/contrast, histogram equalization and CLAHE — using the same data and fixed settings. We matched detections one-to-one with IoU ≥ 0.5 and reported TP, FP, FN, precision, recall, F1, counting error, MAE and run times. The result: YOLO is far better overall (raw F1 0.93 versus 0.50) and preprocessing changes it by only a few faces. Enhancement rescues Viola-Jones in the dark (4/24 → 14/24 faces with HE) but makes it worse in good lighting; in backlight, global HE hurts both detectors while local CLAHE helps both. In other words, a visually better image does not always mean better detection — the effect depends on the detector, the starting condition and whether the enhancement is global or local.”
 
-Numbers on the demo dataset (they will change when regenerated with the group photos — update them from `results/summary.csv` before the presentation):
+Dataset: 6 consented group photos × 3 conditions = **18 images, 72 faces** (24 per condition). Whole dataset (`results/summary.csv`):
 
 | Detector | Raw F1 | B/C F1 | HE F1 | CLAHE F1 |
 |---|---|---|---|---|
-| Viola-Jones | 0.586 (recall 0.41) | 0.776 | 0.909 | 0.965 (3 FP) |
-| YOLOv8n-face | 1.000 | 1.000 | 1.000 | 1.000 |
+| Viola-Jones | 0.495 (TP 27, FP 10, P 0.730, R 0.375, MAE 2.28) | 0.528 (TP 28, FP 6) | 0.562 (TP 34, FP 15, MAE 1.50) | 0.555 (TP 33, FP 14, MAE 1.39) |
+| YOLOv8n-face | 0.934 (TP 64, FP 1, P 0.985, R 0.889, MAE 0.39) | 0.935 | 0.926 | **0.950** (TP 66, MAE 0.28) |
 
 (B/C = brightness/contrast, HE = histogram equalization.)
+
+By condition (TP out of 24, F1 in brackets):
+
+| Detector / condition | Raw | B/C | HE | CLAHE |
+|---|---|---|---|---|
+| VJ normal | 15 (0.667; 6 FP) | 14 (0.667) | 14 (0.636) | 12 (0.585) |
+| VJ low light | 4 (0.258) | 7 (0.424) | **14 (0.651)** | 12 (0.571) |
+| VJ backlight | 8 (0.485) | 7 (0.452) | 6 (0.353; 4 FP) | 9 (0.500) |
+| YOLO normal | 23 (0.958) | 24 (0.960; 2 FP) | 23 (0.958) | 23 (0.958) |
+| YOLO low light | 20 (0.909) | 20 | 21 (0.933) | 21 (0.933) |
+| YOLO backlight | 21 (0.933) | 21 | 19 (0.884) | **22 (0.957)** |
+
+Timing (CPU, inference / end-to-end): VJ raw 92 / 108 ms (end-to-end 245 ms with HE, 221 ms with CLAHE); YOLO raw 51.5 / 55.5 ms (end-to-end 113 ms with CLAHE). On these 1280-px images **YOLO inference is faster than Viola-Jones**; preprocessing increases the end-to-end time for both detectors.
 
 ---
 
 ## 2. Every step of the pipeline: what, why, where
 
 ### 2.1 Image collection and annotation
-* **What:** ≥15 images; ≥5 each for normal light, low light and backlight. Every visible face gets an `[x, y, w, h]` box, plus the true face count.
-* **How:** the **Annotation** tool on the website (`/etiketleme`): drag-and-drop with the mouse, condition selection, per-condition counters, `annotations.json` export. “Suggest with YOLO” is only for speed; every box must be checked by hand, otherwise the ground truth would be biased towards YOLO.
+* **What:** **6 consented group photos** of the students (night/day, indoor/outdoor, selfies and a standing group shot). Each photo in 3 conditions → **18 images** (6 per condition), **72 faces** (24 per condition). The visible faces of people in the background are annotated too. Every visible face gets an `[x, y, w, h]` box, plus the true face count.
+* **Conditions:** *Normal* = the photo itself (orientation-corrected, long side 1280 px). *Low light* and *backlight* are not separate shots but **controlled derivations** of the same photo: low light `s = 255·0.22·(r/255)^2.0` + Gaussian noise σ = 5; backlight: the people inside a head/body mask built from the face boxes are darkened (γ = 1.8, gain 0.30) and the background is over-exposed with glare. Script: `python/make_dataset.py` (seed 42).
+* **Ground-truth boxes:** YOLOv8n-face at a low threshold (0.10) and Viola-Jones proposed candidates; each was checked visually and only genuinely visible faces were kept (people facing away removed; border-cut or hand-covered faces kept). Honest caveat: the boxes follow YOLO's box style, so IoU may be slightly biased in YOLO's favour.
+* **Tool:** the **Annotation** tool on the website (`/etiketleme`): drag-and-drop with the mouse, condition selection, per-condition counters, `annotations.json` export. “Suggest with YOLO” is only for speed; every box must be checked by hand.
 * **Annotation rule:** from the forehead/hairline to the chin, cheek to cheek; partially occluded but visible faces are also annotated.
-* **Code:** `app/etiketleme/Annotator.tsx`, data: `dataset/annotations.json`.
+* **Code:** `python/make_dataset.py`, `app/etiketleme/Annotator.tsx`, data: `dataset/annotations.json`.
 
 ### 2.2 Digital image fundamentals (Lab 1–2)
 * Image = an `f(x, y)` matrix; 8 bits → 0–255. Sampling (resolution) and quantization (bit depth).
@@ -64,7 +79,7 @@ Numbers on the demo dataset (they will change when regenerated with the group ph
 * `g = clip(α·f + β, 0, 255)`, **α = 1.3, β = +20** (fixed for all images).
 * α > 1 **stretches** the histogram (contrast), β **shifts** it (brightness). Pixels saturated at 0/255 are an irreversible loss of information.
 * It is a point operation → applied with a 256-entry LUT.
-* **Observation:** in low light it is not enough (it does not brighten the faces sufficiently and amplifies noise by α); in backlight it saturates the bright background.
+* **Observation:** in low light it is not enough (it does not brighten the faces sufficiently and amplifies noise by α; VJ only 4 → 7/24); in backlight it saturates the bright background (VJ 8 → 7).
 
 ### 2.5 Histogram equalization (enhancement 2 — written without a library function)
 This is the “implement at least one algorithm yourselves” item of the assignment. **Every group member must be able to write it on the board.**
@@ -91,7 +106,7 @@ out = lut[channel]
 (The comment `np.histogram yok` means “no np.histogram” — the histogram is built by hand.)
 
 * **On colour images:** RGB → YCrCb, only **Y** is equalized and Cr/Cb are kept → the hue is not distorted and YOLO still receives a colour input.
-* **Verification:** the hand-written function is **pixel-for-pixel identical** to `cv2.equalizeHist` (maximum difference 0). The TypeScript version also gives the same result, so the F1 of the experiment re-run in the browser is exactly equal to the Python one.
+* **Verification:** the hand-written function is **pixel-for-pixel identical** to `cv2.equalizeHist` (maximum difference 0). The TypeScript version gives the same mapping; when the whole experiment is rerun in the browser, F1 matches Python in 6 of 8 configurations and differs by one face in the other two (the browser decodes JPEGs slightly differently from OpenCV).
 * **Why subtract CDF_min?** So that the darkest existing level maps to 0 and the full range is used (Gonzalez & Woods definition; OpenCV does the same).
 * **Entropy:** equalization can merge levels but cannot create new ones → entropy does not increase. It “looks richer” but adds no new information.
 
@@ -100,6 +115,7 @@ out = lut[channel]
 * **CLAHE:** split the image into 8×8 tiles → **clip** each tile's histogram at `clipLimit · N_blok / 256` (this limits the contrast gain, and therefore the noise amplification) → redistribute the excess counts evenly → one LUT per tile → compute each pixel value as the **bilinear** weighted average of the LUTs of the 4 nearest tiles (no visible tile borders).
 * Settings: **clipLimit = 2.0, tileGridSize = 8×8**, on the Y channel.
 * In the experiment we used OpenCV `createCLAHE` (so that Python and the web give the same result); the website also contains a hand-written CLAHE for teaching purposes (`lib/imgproc.ts → claheGray`).
+* **Result:** in backlight, global HE hurt both detectors (VJ 8 → 6, YOLO 21 → 19 TP) while local CLAHE helped both (VJ 9, YOLO 22). YOLO's best overall F1 is with CLAHE (0.950).
 
 ### 2.7 Convolution and filters (Lab 7)
 * Convolution: `g = Σ h(i,j)·f(x−i, y−j)`; correlation: `f(x+i, y+j)`. Convolution = correlation with the kernel rotated by 180°. For a symmetric kernel they are the same. (CNN libraries actually compute correlation but call it “convolution”.)
@@ -121,8 +137,9 @@ Scanning: the window slides, and at each step the image is shrunk by `scaleFacto
 **Lab 9** shows, with `minNeighbors = 0`, all raw candidate windows (orange) and the final detections after grouping (green) — very effective in the presentation.
 
 * **Model:** `haarcascade_frontalface_default.xml` (OpenCV, Lienhart). No training was needed (the assignment allows this).
-* **Why does it fail in low light?** The features are brightness *differences*; in the dark these differences approach zero and cannot pass the stage thresholds → FN. HE/CLAHE enlarge the differences → recall goes up.
-* **Why FP with HE?** The amplified texture and noise create difference patterns that look like faces.
+* **Why does it fail in low light?** The features are brightness *differences*; in the dark these differences approach zero and cannot pass the stage thresholds → FN (raw: 4/24). HE/CLAHE enlarge the differences → recall goes up (HE 14/24, CLAHE 12/24).
+* **Why does enhancement hurt under normal light?** The contrast is already sufficient; the amplified texture and noise create face-like difference patterns and distort the faces' own pattern → F1 0.667 → 0.636 (HE) → 0.585 (CLAHE; TP 15 → 12).
+* **Sources of false positives:** leaves, patterned clothing, objects on the table. **Misses:** selfie/close-up faces and tilted or border-cut faces (the frontal cascade does not recognise them).
 * **Code:** `python/fd/detectors.py → HaarDetector`, `lib/detectors.ts → detectHaar` (OpenCV.js).
 
 ### 2.10 YOLOv8n-face (deep learning detector)
@@ -130,7 +147,7 @@ Scanning: the window slides, and at each step the image is shrunk by `scaleFacto
 * **Preprocessing:** letterbox (640×640 keeping the aspect ratio, padding value 114), /255, HWC → CHW, tensor `[1, 3, 640, 640]`.
 * **Network:** CSPDarknet backbone + PAN neck + anchor-free decoupled head. 3 scales: strides 8/16/32 → 80×80 + 40×40 + 20×20 = **8400 candidates**, each `(cx, cy, w, h, score)` → output `[1, 5, 8400]`.
 * **Post-processing:** score ≥ **0.35** → **NMS** (remove lower-scoring boxes with IoU ≥ **0.45**) → inverse letterbox: `x = (x' − pad_x) / r`.
-* **Why is it insensitive to preprocessing?** WIDER FACE contains a wide variety of lighting/scale/pose, and HSV/brightness data augmentation is used during training; the network has already learned features that are invariant to illumination.
+* **Why is it only slightly sensitive to preprocessing?** WIDER FACE contains a wide variety of lighting/scale/pose, and HSV/brightness data augmentation is used during training; the network has already learned features that are largely invariant to illumination. In the experiment preprocessing changed YOLO by only a few faces (F1 0.926–0.950); in backlight global HE cost 2 faces and CLAHE gained 1.
 * **Code:** `python/fd/detectors.py → YoloFaceDetector` (onnxruntime), `lib/detectors.ts → detectYolo` (onnxruntime-web). NMS and letterbox were written by hand.
 
 ### 2.11 Evaluation
@@ -154,7 +171,7 @@ Scanning: the window slides, and at each step the image is shrunk by `scaleFacto
 
 ### General / method
 **Q1. What is the goal of the project, and what is your answer to the research question?**
-To measure quantitatively how lighting and enhancement affect detection performance. Answer: No, an image that looks visually better does not always give better detection. HE makes the image look the most contrasted to the human eye, but in VJ it increases FP under normal light; in YOLO it has no effect. The benefit only appears on images that were bad to begin with (dark/backlit) and with the classic detector.
+To measure quantitatively how lighting and enhancement affect detection performance. Answer: No, an image that looks visually better does not always give better detection. The effect depends on three things: (1) **the detector** — VJ with hand-designed features is strongly affected, YOLO with learned features changes by only a few faces; (2) **the starting condition** — it helps dark images (VJ low light 4 → 14/24 with HE) and hurts good ones (VJ normal F1 0.667 → 0.585 with CLAHE); (3) **global vs local** — in backlight, global HE, the method that visibly opens up the image most, makes both detectors worse (VJ 8 → 6, YOLO 21 → 19), while local CLAHE helps both (VJ 9, YOLO 22). Recommendation: use enhancement selectively — only when the image is dark, and CLAHE rather than global HE.
 
 **Q2. Why two different detectors?**
 It is a requirement of the assignment; it also lets us compare two different paradigms: hand-crafted features + boosting (VJ) versus CNN features learned from data (YOLO). The effect of preprocessing turns out to be very different for the two — this is the main finding of the study.
@@ -171,7 +188,7 @@ Histogram equalization (histogram, CDF, LUT) — no library function, difference
 **Q6. Can you write histogram equalization on the board?** → The 4 steps and the code in §2.5. Example: 4 pixels `[50, 50, 100, 200]` → h(50)=2, h(100)=1, h(200)=1; CDF: 50→2, 100→3, 200→4; CDF_min=2, N=4 → s(50)=0, s(100)=round(1/2·255)=128, s(200)=255.
 
 **Q7. What is the difference between HE and CLAHE?**
-HE uses a single global LUT; CLAHE splits the image into tiles, applies a separate LUT built from a clipped histogram to each tile, and blends the tiles bilinearly. Clipping prevents excessive noise amplification in flat regions. In backlight the bright background dominates the global histogram, so CLAHE brightens the face better.
+HE uses a single global LUT; CLAHE splits the image into tiles, applies a separate LUT built from a clipped histogram to each tile, and blends the tiles bilinearly. Clipping prevents excessive noise amplification in flat regions. In backlight the bright background dominates the global histogram, so CLAHE brightens the face better — and in the experiment HE made both detectors worse in backlight while CLAHE improved them (VJ 9, YOLO 22/24).
 
 **Q8. What happens if we increase clipLimit?**
 Less clipping → the behaviour approaches global HE, contrast and noise increase. A very small clipLimit → almost no change. More tiles → more local, but fewer pixels per tile, so the histogram becomes unreliable. (Can be shown with the slider on the Live Detection / Lecture Lab pages.)
@@ -209,11 +226,11 @@ Stretching distorts the aspect ratio, faces become squashed/elongated and drift 
 **Q19. You chose a confidence threshold of 0.35 — what if we change it?**
 Lowering it (0.1) → recall↑, FP↑; raising it (0.7) → precision↑, but FN↑ for small/dark faces. We kept it fixed; during the defense it can be changed and its effect shown live.
 
-**Q20. Why is YOLO not affected by preprocessing?**
-WIDER FACE contains very diverse lighting, and brightness/HSV augmentation is used in training; the network learns illumination-invariant features. Enhancement adds no new information, it only redistributes what is already there — something the network can already do internally. Excessive noise amplification can even hurt, by pushing the input away from the training distribution.
+**Q20. Why is YOLO only slightly affected by preprocessing?**
+WIDER FACE contains very diverse lighting, and brightness/HSV augmentation is used in training; the network learns largely illumination-invariant features. Enhancement adds no new information, it only redistributes what is already there — something the network can already do internally. That is why F1 only moved between 0.926 and 0.950. Excessive amplification can even hurt, by pushing the input away from the training distribution: in backlight, global HE dropped it from 21 to 19 faces, while CLAHE raised it to 22.
 
-**Q21. YOLO is slower — why is it still preferred?**
-It is more accurate and more robust (darkness, backlight, small and tilted faces). VJ is faster on the raw image, but once preprocessing is added the gap closes. On a GPU, YOLO runs in real time.
+**Q21. Which one is faster? Why is YOLO preferred?**
+On these 1280-px images, on CPU, YOLO inference (≈51 ms) is **faster** than Viola-Jones (≈92 ms): VJ scans the whole image over a multi-scale pyramid, while YOLO shrinks the image to 640×640 and runs a single pass. Preprocessing increases the end-to-end time for both (VJ + HE 245 ms, YOLO + CLAHE 113 ms). YOLO is also far more accurate and robust (F1 0.93 vs 0.50), and even faster on a GPU.
 
 ### Evaluation
 **Q22. Why an IoU threshold of 0.50?** It is the threshold given in the assignment and the PASCAL VOC standard. It tolerates a few pixels of uncertainty at the annotation borders.
@@ -231,20 +248,26 @@ Yes: if the detector draws 3 boxes on an image with 3 faces but two of them are 
 
 ### Results and failures
 **Q27. Where does VJ fail the most, and why?**
-Raw low-light images: all faces were missed (FN). The mean brightness is very low, so the Haar differences fall below the cascade thresholds. Partly in backlight as well (bright background).
+Raw low-light images: only 4 of 24 faces were found (F1 0.258). The mean brightness is very low, so the Haar differences fall below the cascade thresholds. Also in backlight (8/24; darkened faces, bright background). In every condition it also misses selfie/close-up, tilted and border-cut faces; its false positives come from leaves, patterned clothing and objects on the table.
 
-**Q28. Why did HE make detection worse in some cases?**
-Under normal light there is already enough contrast; HE amplified background texture and noise and created face-like difference patterns → FP. In backlight, global HE gets dominated by the bright background and does not brighten the face enough.
+**Q28. Why did enhancement make detection worse in some cases?**
+Under normal light there is already enough contrast; HE/CLAHE amplified background texture and noise, created face-like difference patterns and distorted the faces' own pattern → VJ F1 0.667 → 0.636 (HE) → 0.585 (CLAHE; TP 15 → 12). In backlight, global HE builds its single LUT around the bright background; the dark faces get squeezed into a few levels and noise is amplified → although it is the method that visibly opens up the image most, it made both detectors worse (VJ 8 → 6 TP with 4 FP; YOLO 21 → 19).
 
-**Q29. Why might results differ on real group photos?** (If asked about the demo set)
-The demo set was synthetic, to validate the pipeline: the same face, frontal, clean. Real photos have pose, expression, glasses/hair occlusion, real sensor noise and motion blur → a drop for both detectors, especially for VJ.
+**Q29. Why didn't YOLO get perfect scores?**
+It found 64 of 72 faces (1 FP, F1 0.934; with CLAHE 66, F1 0.950). The misses are small and blurry background faces, border-cut faces and hard faces in the darkened derived conditions. The ground truth deliberately includes background people and partly visible faces — so the task is not easy, and F1 = 1.00 is not a realistic expectation on real photos.
+
+**Q29b. Why are the low-light and backlight images derived rather than real shots?**
+For a controlled comparison: the same faces, the same poses, the same ground-truth boxes; **only the lighting changes**. With separate shots people move, pose/expression/framing change, and we could not tell whether a difference comes from the light or from something else. The derivation is reproducible with `python/make_dataset.py`, seed 42 (low light: gamma 2.0 + gain 0.22 + σ = 5 noise; backlight: the person mask is darkened with γ = 1.8 and gain 0.30, the background is over-exposed + glare). Limitation: real low light also brings motion blur, colour noise and the camera's auto-exposure/noise reduction; these were not modelled.
+
+**Q29c. How were the ground-truth boxes made? Is there a bias toward YOLO?**
+YOLOv8n-face at a low threshold (0.10) and Viola-Jones proposed candidates; every candidate was checked visually one by one and only genuinely visible faces were kept (people facing away removed; border-cut or hand-covered faces kept). Honest answer: yes, there may be a small bias — the boxes follow YOLO's box style (borders/aspect ratio), so IoU may be slightly in YOLO's favour. But thanks to the low threshold and the VJ candidates, faces that YOLO misses at its normal threshold are also in the ground truth, so YOLO's recall is not inflated; the IoU ≥ 0.5 threshold also tolerates a few pixels of style difference. The gap between VJ and YOLO (F1 0.50 vs 0.93) is far too large to be explained by this bias.
 
 **Q30. What would you do to improve the results?**
 Condition-aware preprocessing (apply CLAHE only if the mean brightness is below a threshold); noise reduction before CLAHE (bilateral/Gaussian); add a profile cascade for VJ; a larger YOLO model (s/m) or test-time augmentation; combining several detectors.
 
 ### Application, deployment, ethics
 **Q31. Where does detection run in the web application?**
-In the browser, with WebAssembly. OpenCV.js for Haar + CLAHE, ONNX Runtime Web for YOLO. No image is sent to a server. Same model files as in Python; the F1 of the experiment re-run in the browser is exactly the same as in Python.
+In the browser, with WebAssembly. OpenCV.js for Haar + CLAHE, ONNX Runtime Web for YOLO. No image is sent to a server. Same model files as in Python; the F1 of the experiment rerun in the browser matches Python in 6 of 8 configurations and differs by one face in the other two (JPEG decoding differences).
 
 **Q32. Why didn't you write a Python server?**
 Vercel's serverless Python functions hit size and cold-start limits with OpenCV + ONNX + model weights; also, sending face images to a server is a privacy risk. Running in the browser keeps the site static and fast even on the free tier, and the Docker image is a single small service.
@@ -269,7 +292,7 @@ Yes, we made substantial use of an AI coding assistant (Claude) for code and doc
 | “Change the CLAHE clipLimit” | Live Detection (`/tespit`) → turn on CLAHE → clip slider; the histogram changes in the step-by-step preprocessing panel |
 | “Show the histogram equalization code” | `python/fd/enhance.py → equalize_channel_manual` and Lecture Lab (`/laboratuvar#histogram`) |
 | “Rotate an image by 30° and try it” | Lecture Lab (`/laboratuvar#geometri`) (concept) → save the rotated image and upload it to Live Detection (`/tespit`) |
-| “Re-run the experiment” | Experiments (`/deneyler`) → “Run with demo dataset” (in the browser, ~1 min) or `python run_experiments.py` |
+| “Re-run the experiment” | Experiments (`/deneyler`) → “Run with project dataset” (in the browser, ~1 min) or `python run_experiments.py` |
 
 ---
 
@@ -288,11 +311,9 @@ Everyone should also know the §1 summary and the answer to the research questio
 
 ## 5. Pre-submission checklist
 
-1. Take the group photos (get consent), annotate them with the Annotation tool (`/etiketleme`), put them in `dataset/`.
-2. `cd python && python run_experiments.py && python make_report.py` → `results/` and `docs/BM447_Yuz_Tespiti_Raporu.docx` are updated. Fill in names/student numbers/contributions in the `GROUP` list inside `make_report.py`.
-3. Update the numbers in this guide (§1 table) from the new `results/summary.csv`.
-4. Name the folder `Proje1_No1_No2_No3`; zip it excluding `node_modules`, `.next`, `.venv`; **one person uploads it, once**.
-5. Deadline: **24.11.2026 08:00** (akademik.duzce.edu.tr).
+1. Fill in names/student numbers/contributions in the `GROUP` list inside `make_report.py`, then `cd python && python make_report.py` → `docs/BM447_Yuz_Tespiti_Raporu.docx` is updated.
+2. Name the folder `Proje1_No1_No2_No3`; zip it excluding `node_modules`, `.next`, `.venv`; **one person uploads it, once**.
+3. Deadline: **24.11.2026 08:00** (akademik.duzce.edu.tr).
 
 ---
 
@@ -309,8 +330,9 @@ Everyone should also know the §1 summary and the answer to the research questio
 
 **Explaining the research-question answer**
 * “Our answer to the research question is: not always. A visually better image does not guarantee better detection.”
-* “Enhancement rescues Viola-Jones in the dark — its F1 goes from 0.586 on raw images to 0.965 with CLAHE — but it adds false positives in good lighting.”
-* “YOLO is almost unaffected, because it was trained on very diverse lighting and has already learned illumination-invariant features.”
+* “Enhancement rescues Viola-Jones in the dark — in low light it goes from 4 of 24 faces on raw images to 14 with histogram equalization — but it makes it worse in good lighting.”
+* “In backlight, global histogram equalization — the version that looks best to the eye — actually hurts both detectors, while local CLAHE helps both.”
+* “YOLO is far better overall, F1 0.93 versus 0.50, and changes by only a few faces, because it was trained on very diverse lighting and has already learned largely illumination-invariant features.”
 
 **Handling a question you're unsure about**
 * “That's a good question. I'm not completely sure, but my understanding is that…”
