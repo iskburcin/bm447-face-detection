@@ -20,7 +20,8 @@ EXCLUDE_DIRS = {"node_modules", ".next", ".venv", "out", ".git", ".claude", "__p
 EXCLUDE_PUBLIC = {"models", "dataset", "results", "vendor"}  # sync-assets.mjs ile üretilir
 EXCLUDE_FILES = {"tsconfig.tsbuildinfo", "next-env.d.ts", "AGENTS.md", "CLAUDE.md"}
 TOP_COPIES = {  # üst klasöre de konacak dosyalar
-    "docs/BM447_Yuz_Tespiti_Raporu.docx": "BM447_Yuz_Tespiti_Raporu.docx",
+    "docs/CE447_Yuz_Tespiti_Raporu.docx": "CE447_Yuz_Tespiti_Raporu.docx",
+    "docs/CE447_Face_Detection_Report_EN.docx": "CE447_Face_Detection_Report_EN.docx",
     f"docs/DIP_project_checklist_{NAME}.docx": f"DIP_project_checklist_{NAME}.docx",
     "docs/akis_semasi.png": "Akis_Semasi.png",
 }

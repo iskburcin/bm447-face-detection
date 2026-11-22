@@ -100,7 +100,7 @@ def main() -> None:
                           "note": {"normal": "orijinal fotoğraf", "low_light": "düşük ışık (türetilmiş)", "backlight": "ters ışık (türetilmiş)"}[cond]})
     items.sort(key=lambda it: (["normal", "low_light", "backlight"].index(it["condition"]), it["file"]))
     meta = {
-        "name": "BM447 grup fotoğrafları veri kümesi",
+        "name": "CE447 grup fotoğrafları veri kümesi",
         "description": "6 grup fotoğrafı; her biri normal, düşük ışık (türetilmiş) ve ters ışık (türetilmiş) olmak üzere 3 koşulda.",
         "box_format": "[x, y, w, h] piksel, sol-üst köşe",
         "annotation": "YOLO (eşik 0.10) ve Viola-Jones önerileri görsel olarak tek tek kontrol edildi; yalnız görünen yüzler tutuldu.",

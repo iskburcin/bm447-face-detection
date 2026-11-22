@@ -1,4 +1,4 @@
-# BM447 Face Detection Project — Presentation and Defense Guide
+# CE447 Face Detection Project — Presentation and Defense Guide
 
 This document is meant to be used while presenting the project to our instructor (Prof. Dr. Pakize Erdoğmuş) and while answering individual questions.
 For every algorithm it explains **what** it is, **why** we chose it and **where** it is in the code; at the end there is a list of likely questions with ready answers.
@@ -312,7 +312,7 @@ Everyone should also know the §1 summary and the answer to the research questio
 
 ## 5. Pre-submission checklist
 
-1. Fill in names/student numbers/contributions in the `GROUP` list inside `make_report.py`, then `cd python && python make_report.py` → `docs/BM447_Yuz_Tespiti_Raporu.docx` is updated.
+1. Fill in names/student numbers/contributions in the `GROUP` list inside `make_report.py`, then `cd python && python make_report.py` → `docs/CE447_Yuz_Tespiti_Raporu.docx` is updated.
 2. Name the folder `Proje1_No1_No2_No3`; zip it excluding `node_modules`, `.next`, `.venv`; **one person uploads it, once**.
 3. Deadline: **24.11.2026 08:00** (akademik.duzce.edu.tr).
 

@@ -15,7 +15,7 @@ EN = "--en" in sys.argv
 DOCS = Path(__file__).resolve().parents[1] / "docs"
 OUT = DOCS / ("flowchart_en.png" if EN else "akis_semasi.png")
 TR2EN = {
-    "BM447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı": "BM447 - Face Detection under Challenging Conditions: Processing Flow",
+    "CE447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı": "CE447 - Face Detection under Challenging Conditions: Processing Flow",
     "1. Görüntü toplama": "1. Image collection", "≥15 görüntü, 3 koşul × ≥5": "≥15 images, 3 conditions × ≥5",
     "Etiketleme": "Annotation", "GT kutular + gerçek sayı": "GT boxes + true count",
     "Ham (orijinal)": "Raw (original)", "Parlaklık/Kontrast": "Brightness/Contrast", "g = 1.3·f + 20  (elle)": "g = 1.3·f + 20  (by hand)",
@@ -53,7 +53,7 @@ def main():
     ax.set_xlim(0, 15)
     ax.set_ylim(0, 7.2)
     ax.axis("off")
-    ax.text(7.5, 6.9, L("BM447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı"), ha="center", fontsize=14, fontweight="bold", color=TXT)
+    ax.text(7.5, 6.9, L("CE447 - Zorlu Koşullarda Yüz Tespiti: İşlem Akışı"), ha="center", fontsize=14, fontweight="bold", color=TXT)
 
     a1 = box(ax, 0.2, 5.3, 2.4, 0.9, "1. Görüntü toplama", "≥15 görüntü, 3 koşul × ≥5")
     a2 = box(ax, 0.2, 3.9, 2.4, 0.9, "Etiketleme", "GT kutular + gerçek sayı")

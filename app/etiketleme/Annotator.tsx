@@ -105,7 +105,7 @@ export default function Annotator() {
 
   const exportJson = () => {
     const data = {
-      name: "BM447 grup yüz veri kümesi",
+      name: "CE447 grup yüz veri kümesi",
       box_format: "[x, y, w, h] piksel, sol-üst köşe",
       conditions: { normal: "Normal ışık", low_light: "Düşük ışık", backlight: "Ters ışık" },
       images: items.map((x) => ({ file: `images/${x.name}`, condition: x.condition, width: x.w, height: x.h, faces: x.faces, count: x.faces.length })),

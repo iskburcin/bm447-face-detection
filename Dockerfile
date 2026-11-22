@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# YüzLab (BM447) - Next.js standalone, çok aşamalı imaj
+# YüzLab (CE447) - Next.js standalone, çok aşamalı imaj
 # Yüz tespiti tarayıcıda (WASM) çalıştığı için imaj yalnız statik varlıkları ve Next sunucusunu taşır.
 
 FROM node:22-alpine AS deps

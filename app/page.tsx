@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <section className="bento" aria-label="Overview">
       <div className="tile tile--l tile--hero">
-        <span className="hello"><T tr="BM447 · Sayısal Görüntü İşleme Projesi" en="BM447 · Digital Image Processing Project" /></span>
+        <span className="hello"><T tr="CE447 · Sayısal Görüntü İşleme Projesi" en="CE447 · Digital Image Processing Project" /></span>
         <h1><T tr="Zorlu ışıkta yüz tespiti ve kişi sayma" en="Face detection & people counting in challenging light" /></h1>
         <p style={{ maxWidth: "58ch", fontSize: "1.02rem" }}>
           <T

@@ -8,9 +8,9 @@ const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter",
 const saira = Saira_Condensed({ subsets: ["latin", "latin-ext"], weight: ["500", "700"], variable: "--font-saira", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "YüzLab · BM447 Face Detection", template: "%s · YüzLab" },
+  title: { default: "YüzLab · CE447 Face Detection", template: "%s · YüzLab" },
   description:
-    "Yüz tespiti ve kişi sayma / Face detection and people counting under challenging lighting: Viola-Jones vs YOLOv8n-face. BM447 Digital Image Processing, Düzce University.",
+    "Yüz tespiti ve kişi sayma / Face detection and people counting under challenging lighting: Viola-Jones vs YOLOv8n-face. CE447 Digital Image Processing, Düzce University.",
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="wrap">{children}</main>
         <footer className="site-footer">
           <div className="wrap">
-            <span><T tr="BM447 Sayısal Görüntü İşleme · Düzce Üniversitesi" en="BM447 Digital Image Processing · Düzce University" /> · Prof. Dr. Pakize Erdoğmuş</span>
+            <span><T tr="CE447 Sayısal Görüntü İşleme · Düzce Üniversitesi" en="CE447 Digital Image Processing · Düzce University" /> · Prof. Dr. Pakize Erdoğmuş</span>
             <span><T tr="Tüm işlem tarayıcınızda yapılır — görüntüler sunucuya gönderilmez." en="Everything runs in your browser — images are never uploaded to a server." /></span>
           </div>
         </footer>

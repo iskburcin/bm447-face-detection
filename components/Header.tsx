@@ -38,7 +38,7 @@ export default function Header() {
       <div className="wrap">
         <Link href="/" className="brand">
           <span className="brand-mark"><Icon name="face" size={20} /></span>
-          <span>YüzLab<span className="muted" style={{ fontWeight: 500 }}> · BM447</span></span>
+          <span>YüzLab<span className="muted" style={{ fontWeight: 500 }}> · CE447</span></span>
         </Link>
         <button className="icon-btn menu-btn" aria-label={t("Menü", "Menu")} aria-expanded={open} onClick={() => setOpen(!open)}>
           <Icon name="menu" />

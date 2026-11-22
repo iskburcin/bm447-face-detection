@@ -1,6 +1,6 @@
 # YüzLab — Zorlu Görüntüleme Koşullarında Yüz Tespiti ve Kişi Sayma
 
-**BM447 Sayısal Görüntü İşleme · Düzce Üniversitesi · Prof. Dr. Pakize Erdoğmuş**
+**CE447 Sayısal Görüntü İşleme · Düzce Üniversitesi · Prof. Dr. Pakize Erdoğmuş**
 Klasik yöntem (Viola-Jones / Haar Cascade) ile önceden eğitilmiş YOLO yüz modeli (YOLOv8n-face) karşılaştırması.
 
 **Live demo:** <https://iskburcin.github.io/bm447-face-detection/> · the site has a **TR / EN** language switch in the header.
@@ -27,7 +27,7 @@ F1, per-image count error, MAE and timing.
   (4 → 14 of 24 faces), but enhancement makes it worse in normal light, and in backlight global HE hurts both detectors
   while local CLAHE helps both.
 * Presentation guide in English: [`docs/Defense_Guide_EN.md`](docs/Defense_Guide_EN.md).
-* English report (Word): [`docs/BM447_Face_Detection_Report_EN.docx`](docs/BM447_Face_Detection_Report_EN.docx) — regenerate with `python make_report_en.py` (also redraws the English figures in `results/figures_en/`).
+* English report (Word): [`docs/CE447_Face_Detection_Report_EN.docx`](docs/CE447_Face_Detection_Report_EN.docx) — IEEE two-column format; regenerate with `python make_report.py en` (redraws the black-and-white figures in `results/figures_report_en/`).
 
 </details>
 
@@ -146,8 +146,10 @@ Diğer betikler:
 |---|---|
 | `make_dataset.py` | `dataset/originals/` altındaki grup fotoğraflarından normal, düşük ışık (gama + kazanç + gürültü) ve ters ışık (kişi maskesi + aşırı pozlanmış arka plan) sürümlerini ve `annotations.json`'ı üretir (tohum 42) |
 | `make_flowchart.py` | `docs/akis_semasi.png` akış şemasını üretir |
-| `make_report.py` | `results/` verilerinden Word raporunu (`docs/BM447_Yuz_Tespiti_Raporu.docx`) üretir |
-| `make_report_en.py` | İngilizce Word raporu (`docs/BM447_Face_Detection_Report_EN.docx`); önce `make_figures_en.py` ile grafiklerin İngilizce sürümlerini `results/figures_en/` altına çizer |
+| `make_report.py` | Türkçe ve İngilizce Word raporlarını **IEEE konferans formatında** (iki sütun, Times New Roman, siyah-beyaz) üretir: `docs/CE447_Yuz_Tespiti_Raporu.docx`, `docs/CE447_Face_Detection_Report_EN.docx` |
+| `make_report_en.py` | `make_report.py en` ile aynı (geriye dönük uyumluluk) |
+| `make_figures_report.py` | Raporlar için siyah-beyaz, tek sütun genişliğinde şekiller (`results/figures_report_tr|en/`) |
+| `make_figures_en.py` | Web sitesindeki İngilizce renkli şekiller (`results/figures_en/`) |
 | `make_flowchart.py --en` | İngilizce akış şeması `docs/flowchart_en.png` |
 
 > **Neden OpenCV 4.10 sabitlendi?** OpenCV 5.x `CascadeClassifier`'ı ana paketten çıkardı; Viola-Jones için 4.x gerekir.
@@ -223,7 +225,7 @@ Projenin veri kümesi grup üyelerinin 6 onaylı fotoğrafından üretilir. Foto
 
 1. Fotoğrafı `dataset/originals/group_XX.jpg` olarak koyun.
 2. Yüz kutularını `dataset/originals/faces_1280.json` içine ekleyin (koordinatlar, uzun kenarı 1280 px'e küçültülmüş görüntüye göre `[x, y, w, h]`). Kutuları web uygulamasındaki **/etiketleme** aracıyla çizip dışa aktarabilirsiniz.
-3. Sırasıyla çalıştırın: `python make_dataset.py` → `python run_experiments.py` → `python make_report.py` ve `python make_report_en.py`.
+3. Sırasıyla çalıştırın: `python make_dataset.py` → `python run_experiments.py` → `python make_report.py` (Türkçe ve İngilizce IEEE raporlarını birlikte üretir).
 4. Alternatif: **/deneyler** sayfasında “Kendi veri kümem” ile görüntüleri + JSON'u seçip deneyi doğrudan tarayıcıda çalıştırın.
 
 Düşük ışık ve ters ışık sürümleri ayrı çekimler değil, aynı fotoğraftan kontrollü olarak türetilir; böylece yüzler ve pozlar sabit kalır, yalnızca ışık değişir. Gerçek düşük ışık çekimleri eklemek isterseniz `annotations.json`'a doğrudan ayrı kayıt olarak ekleyebilirsiniz.
@@ -276,7 +278,7 @@ Tespit **tarayıcıda (WebAssembly)** yapılır; ayrı bir Python API sunucusu y
 - [ ] Tüm belgeler **tek bir zip** dosyasında
 - [ ] Klasör/zip adı: `Proje1_No1_No2_No3` (öğrenci numaraları alt çizgiyle)
 - [ ] Proje **yalnızca 1 kez** yüklendi
-- [ ] Rapor **Word (.docx)** olarak eklendi → `docs/BM447_Yuz_Tespiti_Raporu.docx`
+- [ ] Rapor **Word (.docx)** olarak eklendi → `docs/CE447_Yuz_Tespiti_Raporu.docx`
 - [ ] Gereksinim dosyası, kodlar, arayüz dosyaları, jpg dosyaları → `python/requirements.txt`, `package.json`, `python/`, `app/`, `lib/`, `dataset/images/*.jpg`
 - [ ] **Akış şeması** görsel olarak → `docs/akis_semasi.png`
 - [ ] Proje sunuldu ve dosyalar eklendi

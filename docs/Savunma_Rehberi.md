@@ -1,4 +1,4 @@
-# BM447 Yüz Tespiti Projesi — Sunum ve Savunma Rehberi
+# CE447 Yüz Tespiti Projesi — Sunum ve Savunma Rehberi
 
 Bu doküman, projeyi hocaya (Prof. Dr. Pakize Erdoğmuş) sunarken ve bireysel sorulara cevap verirken kullanılmak üzere hazırlandı.
 Her algoritmanın **ne** olduğunu, **neden** seçildiğini ve **kodda nerede** olduğunu anlatır; sonunda olası sorular ve hazır cevaplar var.
@@ -304,6 +304,6 @@ Herkes ayrıca §1 özet cümlesini ve araştırma sorusunun cevabını bilmeli.
 
 ## 5. Teslim öncesi kontrol
 
-1. `make_report.py` içindeki `GROUP` listesine ad/numara/katkı yazın, ardından `cd python && python make_report.py` → `docs/BM447_Yuz_Tespiti_Raporu.docx` güncellenir.
+1. `make_report.py` içindeki `GROUP` listesine ad/numara/katkı yazın, ardından `cd python && python make_report.py` → `docs/CE447_Yuz_Tespiti_Raporu.docx` güncellenir.
 2. Klasörü `Proje1_No1_No2_No3` olarak adlandırın; `node_modules`, `.next`, `.venv` hariç zip'leyin; **tek kişi, tek sefer** yükleyin.
 3. Son tarih: **24.11.2026 08:00** (akademik.duzce.edu.tr).
