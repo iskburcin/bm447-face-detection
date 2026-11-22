@@ -19,7 +19,17 @@ FIG = RES / "figures_en"  # English figures (python make_figures_en.py)
 OUT = ROOT / "docs" / "BM447_Face_Detection_Report_EN.docx"
 
 # ---- Cover page: fill in before submission ----
-GROUP = [("Name Surname 1", "Student No 1", "Contribution: ..."), ("Name Surname 2", "Student No 2", "Contribution: ...")]
+GROUP = [
+    ("Burçin Işık", "251015404",
+     "Project coordination; web application (Next.js: Live Detection, Lecture Lab, Experiments and Annotation pages, TR/EN language "
+     "switch); porting the detectors to the browser (OpenCV.js, ONNX Runtime Web); deployment to Vercel, Docker and GitHub Pages; compiling the reports."),
+    ("Yağmur Yılmaz", "251015306",
+     "Collecting the group photos and the consents; annotating and checking the ground-truth face boxes; deriving the low-light and "
+     "backlit conditions; preprocessing algorithms (hand-written histogram equalization, brightness/contrast, CLAHE) and their verification."),
+    ("Yiğitcan Yıldız", "221015055",
+     "Integrating the Viola-Jones and YOLOv8n-face detectors into the Python pipeline and fixing their parameters; one-to-one matching at "
+     "IoU ≥ 0.50, TP/FP/FN, precision, recall, F1, MAE and timing; running the experiments, producing tables/figures and analysing the results."),
+]
 
 ENH = {"original": "Raw", "brightness_contrast": "Brightness/Contrast", "hist_eq": "Histogram Equalization", "clahe": "CLAHE"}
 DET = {"viola_jones": "Viola-Jones", "yolo": "YOLOv8n-face"}
@@ -63,7 +73,7 @@ def main() -> None:
         r.bold = bold
         if size >= 16:
             r.font.color.rgb = ACCENT
-    table(doc, ["Name", "Student No", "Individual contribution"], GROUP, widths=[5, 4, 7], font=10)
+    table(doc, ["Name", "Student No", "Individual contribution"], GROUP, widths=[3.5, 2.6, 10.4], font=9)
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.add_run(f"\nExperiment date: {res['generated']}").font.size = Pt(9)

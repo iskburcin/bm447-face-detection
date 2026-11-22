@@ -22,7 +22,17 @@ FIG = RES / "figures"
 OUT = ROOT / "docs" / "BM447_Yuz_Tespiti_Raporu.docx"
 
 # ---- Kapak bilgileri: teslimden önce doldurun ----
-GROUP = [("Ad Soyad 1", "Öğrenci No 1", "Katkı: ..."), ("Ad Soyad 2", "Öğrenci No 2", "Katkı: ...")]
+GROUP = [
+    ("Burçin Işık", "251015404",
+     "Proje koordinasyonu; web uygulaması (Next.js: Canlı Tespit, Ders Laboratuvarı, Deneyler, Etiketleme sayfaları, TR/EN dil desteği); "
+     "dedektörlerin tarayıcıya taşınması (OpenCV.js, ONNX Runtime Web); Vercel, Docker ve GitHub Pages dağıtımı; raporların derlenmesi."),
+    ("Yağmur Yılmaz", "251015306",
+     "Grup fotoğraflarının toplanması ve onayların alınması; referans yüz kutularının etiketlenmesi ve kontrolü; düşük ışık ve ters ışık "
+     "koşullarının türetilmesi; ön işleme algoritmaları (elle yazılan histogram eşitleme, parlaklık/kontrast, CLAHE) ve doğrulaması."),
+    ("Yiğitcan Yıldız", "221015055",
+     "Viola-Jones ve YOLOv8n-face dedektörlerinin Python hattına entegrasyonu ve parametrelerin sabitlenmesi; IoU ≥ 0,50 bire bir "
+     "eşleştirme, TP/FP/FN, precision, recall, F1, MAE ve süre ölçümü; deneylerin çalıştırılması, tablo/şekil üretimi ve sonuç analizi."),
+]
 
 ENH = {"original": "Ham", "brightness_contrast": "Parlaklık/Kontrast", "hist_eq": "Histogram Eşitleme", "clahe": "CLAHE"}
 DET = {"viola_jones": "Viola-Jones", "yolo": "YOLOv8n-face"}
@@ -118,7 +128,7 @@ def main() -> None:
         r.bold = bold
         if size >= 16:
             r.font.color.rgb = ACCENT
-    table(doc, ["Ad Soyad", "Öğrenci No", "Bireysel katkı"], GROUP, widths=[5, 4, 7], font=10)
+    table(doc, ["Ad Soyad", "Öğrenci No", "Bireysel katkı"], GROUP, widths=[3.5, 2.6, 10.4], font=9)
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.add_run(f"\nDeney tarihi: {res['generated']}").font.size = Pt(9)

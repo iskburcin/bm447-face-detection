@@ -281,7 +281,9 @@ Tespit **tarayıcıda (WebAssembly)** yapılır; ayrı bir Python API sunucusu y
 - [ ] **Akış şeması** görsel olarak → `docs/akis_semasi.png`
 - [ ] Proje sunuldu ve dosyalar eklendi
 
-Zip'e **eklemeyin**: `node_modules/`, `.next/`, `.venv/`, `public/models|dataset|results|vendor` (üretilir). Örnek (PowerShell, proje klasörünün bir üstünde):
+Teslim zip'ini otomatik üretmek için: `python scripts/make_submission_zip.py` → `../Proje1_251015404_251015306_221015055.zip` (üretilen klasörleri hariç tutar; Word raporu, doldurulmuş kontrol listesi ve akış şemasını üst klasöre de koyar).
+
+Elle yapacaksanız zip'e **eklemeyin**: `node_modules/`, `.next/`, `.venv/`, `public/models|dataset|results|vendor` (üretilir). Örnek (PowerShell, proje klasörünün bir üstünde):
 
 ```powershell
 Compress-Archive -Path face-detection-project\* -DestinationPath Proje1_N1_N2_N3.zip -CompressionLevel Optimal

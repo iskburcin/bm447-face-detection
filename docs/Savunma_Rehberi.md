@@ -288,14 +288,15 @@ Evet, kod ve dokümantasyonda bir YZ kodlama asistanından (Claude) önemli öl�
 
 ---
 
-## 4. Bireysel katkı şablonu (her üye kendi kısmını doldursun)
+## 4. Bireysel katkılar
 
-| Üye | Sorumlu olduğu kısım | Savunmada anlatacağı |
-|---|---|---|
-| Üye 1 | Veri toplama, etiketleme, metrikler | §2.1, §2.11, S22–S26 |
-| Üye 2 | Ön işleme (elle HE), CLAHE | §2.4–2.6, S5–S10 |
-| Üye 3 | Viola-Jones, YOLO entegrasyonu | §2.9–2.10, S11–S21 |
-| Üye 4 | Web uygulaması, Docker/Vercel, rapor | §2.12, S31–S36 |
+| Üye | No | Sorumlu olduğu kısım | Savunmada anlatacağı |
+|---|---|---|---|
+| Burçin Işık | 251015404 | Proje koordinasyonu; web uygulaması (Canlı Tespit, Ders Laboratuvarı, Deneyler, Etiketleme, TR/EN); dedektörlerin tarayıcıya taşınması (OpenCV.js, ONNX Runtime Web); Vercel/Docker/GitHub Pages; raporların derlenmesi | §2.12, S31–S36, canlı demo |
+| Yağmur Yılmaz | 251015306 | Grup fotoğrafları ve onaylar; referans kutuların etiketlenmesi/kontrolü; düşük ışık ve ters ışık koşullarının türetilmesi; ön işleme (elle HE, parlaklık/kontrast, CLAHE) | §2.1, §2.4–2.6, S5–S10, S29b, S29c |
+| Yiğitcan Yıldız | 221015055 | Viola-Jones ve YOLOv8n-face entegrasyonu, sabit parametreler; IoU eşleştirme, TP/FP/FN, P/R/F1, MAE, süre ölçümü; deneyler, tablolar/şekiller, sonuç analizi | §2.9–2.11, S11–S28 |
+
+Not: Katkılar raporun kapağındaki tabloyla aynıdır (`python/make_report.py` → `GROUP`). Gerçek iş bölümünüz farklıysa iki yerde de düzeltin; her üye kendi kısmını ayrıntılı anlatabilmeli.
 
 Herkes ayrıca §1 özet cümlesini ve araştırma sorusunun cevabını bilmeli.
 

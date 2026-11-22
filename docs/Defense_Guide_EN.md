@@ -296,14 +296,15 @@ Yes, we made substantial use of an AI coding assistant (Claude) for code and doc
 
 ---
 
-## 4. Individual contribution template (each member fills in their own part)
+## 4. Individual contributions
 
-| Member | Responsible for | Will explain in the defense |
-|---|---|---|
-| Member 1 | Data collection, annotation, metrics | §2.1, §2.11, Q22–Q26 |
-| Member 2 | Preprocessing (hand-written HE), CLAHE | §2.4–2.6, Q5–Q10 |
-| Member 3 | Viola-Jones, YOLO integration | §2.9–2.10, Q11–Q21 |
-| Member 4 | Web application, Docker/Vercel, report | §2.12, Q31–Q36 |
+| Member | No | Responsible for | Will explain in the defense |
+|---|---|---|---|
+| Burçin Işık | 251015404 | Project coordination; web application (Live Detection, Lecture Lab, Experiments, Annotation, TR/EN); porting the detectors to the browser (OpenCV.js, ONNX Runtime Web); Vercel/Docker/GitHub Pages; compiling the reports | §2.12, Q31–Q36, live demo |
+| Yağmur Yılmaz | 251015306 | Group photos and consents; annotating/checking the ground-truth boxes; deriving the low-light and backlit conditions; preprocessing (hand-written HE, brightness/contrast, CLAHE) | §2.1, §2.4–2.6, Q5–Q10, Q29b, Q29c |
+| Yiğitcan Yıldız | 221015055 | Integrating Viola-Jones and YOLOv8n-face, fixed parameters; IoU matching, TP/FP/FN, P/R/F1, MAE, timing; experiments, tables/figures, analysis of the results | §2.9–2.11, Q11–Q28 |
+
+Note: these match the cover table of the report (`python/make_report_en.py` → `GROUP`). If your real split was different, fix both places; every member must be able to explain their own part in detail.
 
 Everyone should also know the §1 summary and the answer to the research question.
 
